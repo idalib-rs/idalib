@@ -56,3 +56,8 @@ harness = false
 name = "test_xrefs"
 path = "tests/test_xrefs.rs"
 harness = false
+
+[[test]]
+name = "test_instructions"
+path = "tests/test_instructions.rs"
+harness = false
