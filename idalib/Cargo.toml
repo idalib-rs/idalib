@@ -66,3 +66,8 @@ harness = false
 name = "test_search"
 path = "tests/test_search.rs"
 harness = false
+
+[[test]]
+name = "test_segments"
+path = "tests/test_segments.rs"
+harness = false
