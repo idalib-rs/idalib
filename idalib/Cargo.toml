@@ -36,3 +36,8 @@ idalib-build = { version = "0.10", path = "../idalib-build" }
 name = "test_bytes"
 path = "tests/test_bytes.rs"
 harness = false
+
+[[test]]
+name = "test_heads"
+path = "tests/test_heads.rs"
+harness = false
