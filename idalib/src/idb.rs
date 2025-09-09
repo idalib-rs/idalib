@@ -17,6 +17,7 @@ use crate::ffi::ida::{
 };
 use crate::ffi::insn::decode;
 use crate::ffi::loader::find_plugin;
+use crate::ffi::name::idalib_get_ea_name;
 use crate::ffi::processor::get_ph;
 use crate::ffi::search::{idalib_find_defined, idalib_find_imm, idalib_find_text};
 use crate::ffi::segment::{get_segm_by_name, get_segm_qty, getnseg, getseg};
@@ -565,6 +566,11 @@ impl IDB {
         }
 
         buf
+    }
+
+    pub fn get_name(&self, ea: Address) -> Option<String> {
+        let name = unsafe { idalib_get_ea_name(ea.into()) };
+        if name.is_empty() { None } else { Some(name) }
     }
 
     pub fn is_loaded(&self, ea: Address) -> bool {

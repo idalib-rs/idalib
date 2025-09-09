@@ -734,6 +734,7 @@ mod ffix {
         include!("loader_extras.h");
         include!("nalt_extras.h");
         include!("ph_extras.h");
+        include!("name_extras.h");
         include!("segm_extras.h");
         include!("search_extras.h");
         include!("strings_extras.h");
@@ -1049,6 +1050,7 @@ mod ffix {
             minor: *mut c_int,
             build: *mut c_int,
         ) -> bool;
+        unsafe fn idalib_get_ea_name(ea: c_ulonglong) -> String;
     }
 }
 
@@ -1246,6 +1248,7 @@ pub mod name {
         get_nlist_ea, get_nlist_idx, get_nlist_name, get_nlist_size, is_in_nlist, is_public_name,
         is_weak_name,
     };
+    pub use super::ffix::idalib_get_ea_name;
 }
 
 pub mod ida {
