@@ -25,6 +25,14 @@ cxx = "1"
 idalib-macros = { version = "0.10", path = "../idalib-macros", optional = true }
 idalib-sys = { version = "0.10", path = "../idalib-sys" }
 thiserror = "1"
+ 
+[dev-dependencies]
+tempdir = "0.3"
 
 [build-dependencies]
 idalib-build = { version = "0.10", path = "../idalib-build" }
+
+[[test]]
+name = "test_bytes"
+path = "tests/test_bytes.rs"
+harness = false

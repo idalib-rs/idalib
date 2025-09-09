@@ -92,6 +92,10 @@ pub mod strings;
 pub mod typeinf;
 pub mod xref;
 
+// TODO: only include this when testing, like #[cfg(test)]
+// #[cfg(test)]
+pub mod tests;
+
 pub use idalib_sys as ffi;
 
 pub use ffi::IDAError;
