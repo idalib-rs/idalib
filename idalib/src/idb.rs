@@ -322,7 +322,15 @@ impl IDB {
         unsafe { get_func_qty() }
     }
 
-    pub fn segment_at(&self, ea: Address) -> Option<Segment<'_>> {
+    pub fn heads<'a>(&'a self, start: Address, end: Address) -> HeadsIterator<'a> {
+        HeadsIterator {
+            idb: self,
+            current: Some(start),
+            end,
+        }
+    }
+
+    pub fn segment_at(&self, ea: Address) -> Option<Segment<'_>>
         let ptr = unsafe { getseg(ea.into()) };
 
         if ptr.is_null() {
@@ -652,6 +660,30 @@ impl Drop for IDB {
             }
         }
         close_database_with(self.save);
+    }
+}
+
+pub struct HeadsIterator<'a> {
+    idb: &'a IDB,
+    current: Option<Address>,
+    end: Address,
+}
+
+impl<'a> Iterator for HeadsIterator<'a> {
+    type Item = Address;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let current = self.current?;
+        
+        if current >= self.end {
+            self.current = None;
+            return None;
+        }
+
+        let next_addr = self.idb.next_head_with(current, self.end);
+        self.current = next_addr;
+        
+        Some(current)
     }
 }
 
