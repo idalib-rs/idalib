@@ -30,6 +30,7 @@ use crate::ffi::xref::{xrefblk_t, xrefblk_t_first_from, xrefblk_t_first_to};
 use crate::bookmarks::Bookmarks;
 use crate::decompiler::CFunction;
 use crate::func::{Function, FunctionId};
+use crate::import::ImportIterator;
 use crate::insn::{Insn, Register};
 use crate::meta::{Metadata, MetadataMut};
 use crate::name::NameList;
@@ -649,6 +650,10 @@ impl IDB {
     pub fn load_plugin(&self, name: impl AsRef<str>) -> Result<Plugin<'_>, IDAError> {
         self.find_plugin(name, true)
     }
+
+    pub fn imports(&self) -> ImportIterator {
+        ImportIterator::new()
+    }
 }
 
 #[cfg(not(feature = "plugin"))]
@@ -674,7 +679,7 @@ impl<'a> Iterator for HeadsIterator<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let current = self.current?;
-        
+
         if current >= self.end {
             self.current = None;
             return None;
@@ -682,7 +687,7 @@ impl<'a> Iterator for HeadsIterator<'a> {
 
         let next_addr = self.idb.next_head_with(current, self.end);
         self.current = next_addr;
-        
+
         Some(current)
     }
 }
