@@ -1034,6 +1034,13 @@ mod ffix {
 
         unsafe fn idalib_get_input_file_path() -> String;
 
+        unsafe fn idalib_get_imports(
+            module_name: &mut Vec<String>,
+            import_names: &mut Vec<String>,
+            addresses: &mut Vec<u64>,
+            ordinals: &mut Vec<u32>,
+        ) -> bool;
+
         unsafe fn idalib_plugin_version(p: *const plugin_t) -> u64;
         unsafe fn idalib_plugin_flags(p: *const plugin_t) -> u64;
 
@@ -1231,7 +1238,7 @@ pub mod nalt {
     pub use super::ffi::{
         retrieve_input_file_md5, retrieve_input_file_sha256, retrieve_input_file_size,
     };
-    pub use super::ffix::idalib_get_input_file_path;
+    pub use super::ffix::{idalib_get_imports, idalib_get_input_file_path};
 }
 
 pub mod name {
