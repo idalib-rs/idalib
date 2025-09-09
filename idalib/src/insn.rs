@@ -4,7 +4,7 @@ use bitflags::bitflags;
 
 use crate::ffi::insn::insn_t;
 use crate::ffi::insn::op::*;
-use crate::ffi::util::{is_basic_block_end, is_call_insn, is_indirect_jump_insn, is_ret_insn};
+use crate::ffi::util::{is_basic_block_end, is_call_insn, is_indirect_jump_insn, is_ret_insn, idalib_get_insn_mnem};
 
 pub use crate::ffi::insn::{arm, mips, x86};
 
@@ -148,6 +148,11 @@ impl Insn {
     pub fn is_ret_with(&self, iri: IsReturnFlags) -> bool {
         unsafe { is_ret_insn(&self.inner, iri.bits()) }
     }
+
+    pub fn mnemonic(&self) -> String {
+        unsafe { idalib_get_insn_mnem(autocxx::c_ulonglong(self.inner.ea)) }
+    }
+
 }
 
 impl Operand {

@@ -3,6 +3,7 @@
 #include "pro.h"
 #include "idp.hpp"
 #include "segregs.hpp"
+#include "ua.hpp"
 
 #include "cxx.h"
 
@@ -28,4 +29,12 @@ bool idalib_is_thumb_at(const processor_t *ph, ea_t ea) {
     return tbit != 0 && tbit != BADSEL;
   }
   return false;
+}
+
+rust::String idalib_get_insn_mnem(ea_t ea) {
+  qstring buf;
+  if (print_insn_mnem(&buf, ea)) {
+    return rust::String(buf.c_str());
+  }
+  return rust::String("");
 }
