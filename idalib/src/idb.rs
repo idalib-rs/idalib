@@ -408,6 +408,16 @@ impl IDB {
         }
     }
 
+    pub fn xrefs_to<'a>(&'a self, ea: Address) -> impl Iterator<Item = XRef<'a>> + 'a {
+        let first_xref = self.first_xref_to(ea, XRefQuery::ALL);
+        XRefToIterator { current: first_xref }
+    }
+
+    pub fn xrefs_from<'a>(&'a self, ea: Address) -> impl Iterator<Item = XRef<'a>> + 'a {
+        let first_xref = self.first_xref_from(ea, XRefQuery::ALL);
+        XRefFromIterator { current: first_xref }
+    }
+
     pub fn get_cmt(&self, ea: Address) -> Option<String> {
         self.get_cmt_with(ea, false)
     }
@@ -717,6 +727,34 @@ impl<'a> Iterator for HeadsIterator<'a> {
         let next_addr = self.idb.next_head_with(current, self.end);
         self.current = next_addr;
 
+        Some(current)
+    }
+}
+
+pub struct XRefToIterator<'a> {
+    current: Option<XRef<'a>>,
+}
+
+impl<'a> Iterator for XRefToIterator<'a> {
+    type Item = XRef<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let current = self.current.take()?;
+        self.current = current.next_to();
+        Some(current)
+    }
+}
+
+pub struct XRefFromIterator<'a> {
+    current: Option<XRef<'a>>,
+}
+
+impl<'a> Iterator for XRefFromIterator<'a> {
+    type Item = XRef<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let current = self.current.take()?;
+        self.current = current.next_from();
         Some(current)
     }
 }
