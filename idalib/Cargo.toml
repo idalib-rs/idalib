@@ -41,3 +41,8 @@ harness = false
 name = "test_heads"
 path = "tests/test_heads.rs"
 harness = false
+
+[[test]]
+name = "test_imports"
+path = "tests/test_imports.rs"
+harness = false
