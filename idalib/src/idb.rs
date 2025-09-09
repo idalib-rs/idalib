@@ -25,6 +25,7 @@ use crate::ffi::processor::get_ph;
 use crate::ffi::search::{idalib_find_defined, idalib_find_imm, idalib_find_text};
 use crate::ffi::segment::{get_segm_by_name, get_segm_qty, getnseg, getseg};
 use crate::ffi::typeinf::{idalib_format_cfunc_decls, idalib_format_decls};
+use crate::ffi::strings::{idalib_get_max_strlit_length, idalib_get_strlit_contents};
 use crate::ffi::util::{is_align_insn, next_head, prev_head, str2reg};
 use crate::ffi::xref::{xrefblk_t, xrefblk_t_first_from, xrefblk_t_first_to};
 
@@ -620,6 +621,20 @@ impl IDB {
         }
 
         buf
+    }
+
+    pub fn get_string_at(&self, ea: Address) -> Option<String> {
+        let max_len = unsafe { idalib_get_max_strlit_length(ea.into(), -1) };
+        if max_len == 0 {
+            return None;
+        }
+
+        let contents = unsafe { idalib_get_strlit_contents(ea.into(), max_len, -1) };
+        if contents.is_empty() {
+            None
+        } else {
+            Some(contents)
+        }
     }
 
     pub fn get_name(&self, ea: Address) -> Option<String> {
