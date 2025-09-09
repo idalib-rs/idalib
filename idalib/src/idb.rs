@@ -22,7 +22,10 @@ use crate::ffi::insn::decode;
 use crate::ffi::name::idalib_get_ea_name;
 use crate::ffi::plugin::find_plugin;
 use crate::ffi::processor::get_ph;
-use crate::ffi::search::{idalib_find_defined, idalib_find_imm, idalib_find_text};
+use crate::ffi::search::{
+    idalib_bin_search, idalib_find_binary, idalib_find_defined, idalib_find_imm, idalib_find_text,
+    idalib_parse_binpat_str,
+};
 use crate::ffi::segment::{get_segm_by_name, get_segm_qty, getnseg, getseg};
 use crate::ffi::typeinf::{idalib_format_cfunc_decls, idalib_format_decls};
 use crate::ffi::strings::{idalib_get_max_strlit_length, idalib_get_strlit_contents};
@@ -410,12 +413,16 @@ impl IDB {
 
     pub fn xrefs_to<'a>(&'a self, ea: Address) -> impl Iterator<Item = XRef<'a>> + 'a {
         let first_xref = self.first_xref_to(ea, XRefQuery::ALL);
-        XRefToIterator { current: first_xref }
+        XRefToIterator {
+            current: first_xref,
+        }
     }
 
     pub fn xrefs_from<'a>(&'a self, ea: Address) -> impl Iterator<Item = XRef<'a>> + 'a {
         let first_xref = self.first_xref_from(ea, XRefQuery::ALL);
-        XRefFromIterator { current: first_xref }
+        XRefFromIterator {
+            current: first_xref,
+        }
     }
 
     pub fn get_cmt(&self, ea: Address) -> Option<String> {
@@ -578,6 +585,80 @@ impl IDB {
 
     pub fn find_defined(&self, start_ea: Address) -> Option<Address> {
         let addr = unsafe { idalib_find_defined(start_ea.into()) };
+        if addr == BADADDR {
+            None
+        } else {
+            Some(addr.into())
+        }
+    }
+
+    pub fn find_bytes(&self, pattern: impl AsRef<str>) -> Option<Address> {
+        self.find_bytes_range(pattern, 0, u64::MAX)
+    }
+
+    pub fn find_bytes_range(
+        &self,
+        pattern: impl AsRef<str>,
+        start_ea: Address,
+        end_ea: Address,
+    ) -> Option<Address> {
+        let s = CString::new(pattern.as_ref()).ok()?;
+        let addr =
+            unsafe { idalib_bin_search(start_ea.into(), end_ea.into(), s.as_ptr(), 0.into()) };
+        if addr == BADADDR {
+            None
+        } else {
+            Some(addr.into())
+        }
+    }
+
+    pub fn find_bytes_iter<'a>(
+        &'a self,
+        pattern: impl AsRef<str> + 'a,
+    ) -> impl Iterator<Item = Address> + 'a {
+        let mut cur = 0u64;
+        std::iter::from_fn(move || {
+            cur = self.find_bytes_range(pattern.as_ref(), cur, u64::MAX)?;
+            let found = cur;
+            cur = self.find_defined(cur).unwrap_or(BADADDR.into());
+            Some(found)
+        })
+    }
+
+    pub fn parse_binary_pattern(&self, pattern: impl AsRef<str>) -> Option<(Vec<u8>, Vec<u8>)> {
+        let s = CString::new(pattern.as_ref()).ok()?;
+        let mut bytes = Vec::new();
+        let mut mask = Vec::new();
+
+        let success = unsafe { idalib_parse_binpat_str(s.as_ptr(), &mut bytes, &mut mask) };
+        if success { Some((bytes, mask)) } else { None }
+    }
+
+    pub fn find_binary(&self, bytes: &[u8], mask: &[u8]) -> Option<Address> {
+        self.find_binary_range(bytes, mask, 0, u64::MAX)
+    }
+
+    pub fn find_binary_range(
+        &self,
+        bytes: &[u8],
+        mask: &[u8],
+        start_ea: Address,
+        end_ea: Address,
+    ) -> Option<Address> {
+        if bytes.len() != mask.len() {
+            return None;
+        }
+
+        let addr = unsafe {
+            idalib_find_binary(
+                start_ea.into(),
+                end_ea.into(),
+                bytes.as_ptr(),
+                mask.as_ptr(),
+                bytes.len(),
+            )
+        };
+
         if addr == BADADDR {
             None
         } else {

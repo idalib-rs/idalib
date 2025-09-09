@@ -1074,6 +1074,10 @@ mod ffix {
         unsafe fn idalib_find_text(ea: c_ulonglong, text: *const c_char) -> c_ulonglong;
         unsafe fn idalib_find_imm(ea: c_ulonglong, imm: c_uint) -> c_ulonglong;
         unsafe fn idalib_find_defined(ea: c_ulonglong) -> c_ulonglong;
+        
+        unsafe fn idalib_bin_search(start_ea: c_ulonglong, end_ea: c_ulonglong, pattern: *const c_char, flags: c_int) -> c_ulonglong;
+        unsafe fn idalib_parse_binpat_str(pattern: *const c_char, out_bytes: &mut Vec<u8>, out_mask: &mut Vec<u8>) -> bool;
+        unsafe fn idalib_find_binary(start_ea: c_ulonglong, end_ea: c_ulonglong, bytes: *const u8, mask: *const u8, len: usize) -> c_ulonglong;
 
         unsafe fn idalib_get_strlist_item_addr(index: usize) -> c_ulonglong;
         unsafe fn idalib_get_strlist_item_length(index: usize) -> usize;
@@ -1285,7 +1289,10 @@ pub mod bookmarks {
 }
 
 pub mod search {
-    pub use super::ffix::{idalib_find_defined, idalib_find_imm, idalib_find_text};
+    pub use super::ffix::{
+        idalib_find_defined, idalib_find_imm, idalib_find_text,
+        idalib_bin_search, idalib_parse_binpat_str, idalib_find_binary,
+    };
 }
 
 pub mod strings {
