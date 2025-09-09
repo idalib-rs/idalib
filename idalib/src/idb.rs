@@ -612,6 +612,14 @@ impl IDB {
         buf
     }
 
+    pub fn is_loaded(&self, ea: Address) -> bool {
+        unsafe { idalib_is_loaded(ea.into()) }
+    }
+
+    pub fn is_mapped(&self, ea: Address) -> bool {
+        unsafe { idalib_is_mapped(ea.into()) }
+    }
+
     pub fn find_plugin(
         &self,
         name: impl AsRef<str>,

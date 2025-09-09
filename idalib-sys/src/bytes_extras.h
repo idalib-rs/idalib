@@ -1,6 +1,7 @@
 #pragma once
 
 #include "bytes.hpp"
+#include "segment.hpp"
 
 #include "cxx.h"
 
@@ -16,4 +17,12 @@ std::size_t idalib_get_bytes(ea_t ea, rust::Vec<rust::u8> &buf) {
   } else {
     return 0;
   }
+}
+
+bool idalib_is_loaded(ea_t ea) { 
+  return is_loaded(ea); 
+}
+
+bool idalib_is_mapped(ea_t ea) { 
+  return getseg(ea) != nullptr;
 }
