@@ -593,6 +593,14 @@ impl IDB {
         AddressFlags::new(unsafe { get_flags(ea.into()) })
     }
 
+    pub fn is_code(&self, ea: Address) -> bool {
+        self.flags_at(ea).is_code()
+    }
+
+    pub fn is_data(&self, ea: Address) -> bool {
+        self.flags_at(ea).is_data()
+    }
+
     pub fn get_byte(&self, ea: Address) -> u8 {
         unsafe { idalib_get_byte(ea.into()) }
     }
