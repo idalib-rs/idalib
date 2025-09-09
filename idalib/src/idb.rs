@@ -19,6 +19,7 @@ use crate::ffi::hexrays::{decompile_func, init_hexrays_plugin};
 use crate::ffi::ida::{auto_wait, close_database_with, open_database_quiet};
 use crate::ffi::ida::{make_signatures, set_screen_ea};
 use crate::ffi::insn::decode;
+use crate::ffi::name::idalib_get_ea_name;
 use crate::ffi::plugin::find_plugin;
 use crate::ffi::processor::get_ph;
 use crate::ffi::search::{idalib_find_defined, idalib_find_imm, idalib_find_text};
@@ -619,6 +620,11 @@ impl IDB {
         }
 
         buf
+    }
+
+    pub fn get_name(&self, ea: Address) -> Option<String> {
+        let name = unsafe { idalib_get_ea_name(ea.into()) };
+        if name.is_empty() { None } else { Some(name) }
     }
 
     pub fn is_loaded(&self, ea: Address) -> bool {
