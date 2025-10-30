@@ -336,7 +336,7 @@ impl IDB {
         }
     }
 
-    pub fn segment_at(&self, ea: Address) -> Option<Segment<'_>>
+    pub fn segment_at(&self, ea: Address) -> Option<Segment<'_>> {
         let ptr = unsafe { getseg(ea.into()) };
 
         if ptr.is_null() {
@@ -771,7 +771,7 @@ impl IDB {
         self.find_plugin(name, true)
     }
 
-    pub fn imports(&self) -> ImportIterator {
+    pub fn imports(&self) -> ImportIterator<'_> {
         ImportIterator::new()
     }
 }
