@@ -1057,6 +1057,8 @@ mod ffix {
         unsafe fn idalib_segm_perm(s: *const segment_t) -> u8;
         unsafe fn idalib_segm_bitness(s: *const segment_t) -> u8;
         unsafe fn idalib_segm_type(s: *const segment_t) -> u8;
+        unsafe fn idalib_get_fileregion_offset(ea: c_ulonglong) -> i64;
+        unsafe fn idalib_get_fileregion_ea(offset: i64) -> c_ulonglong;
 
         unsafe fn idalib_get_cmt(ea: c_ulonglong, rptble: bool) -> String;
 
@@ -1241,8 +1243,9 @@ pub mod segment {
     };
 
     pub use super::ffix::{
-        idalib_segm_align, idalib_segm_bitness, idalib_segm_bytes, idalib_segm_name,
-        idalib_segm_perm, idalib_segm_type,
+        idalib_get_fileregion_ea, idalib_get_fileregion_offset, idalib_segm_align,
+        idalib_segm_bitness, idalib_segm_bytes, idalib_segm_name, idalib_segm_perm,
+        idalib_segm_type,
     };
 }
 

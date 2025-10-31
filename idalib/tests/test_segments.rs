@@ -1,7 +1,7 @@
 use tempdir::TempDir;
 
 use idalib::idb::IDB;
-use idalib::segment::{SegmentPermissions, SegmentType};
+use idalib::segment::{self, SegmentPermissions, SegmentType};
 use idalib::tests;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -175,6 +175,30 @@ fn test_segments() {
     }
 }
 
+fn test_fileregion_functions() {
+    const FILENAME: &str = "Practical Malware Analysis Lab 01-01.dll_";
+    let dir = TempDir::new("idalib-rs-tests").unwrap();
+    let dst = dir.path().join(FILENAME);
+    let src = tests::get_test_file_path(FILENAME);
+    std::fs::copy(&src, &dst).unwrap();
+
+    let _idb = IDB::open(dst).unwrap();
+
+    // Test get_fileregion_offset for a known address
+    // .text segment starts at 0x10001000
+    let offset = segment::get_fileregion_offset(0x10001000);
+    assert!(offset >= 0, "get_fileregion_offset should return a non-negative offset for valid address");
+
+    // Test get_fileregion_ea with the offset we just got
+    let ea = segment::get_fileregion_ea(offset);
+    assert_eq!(ea, 0x10001000, "get_fileregion_ea should map back to original address");
+
+    // Test with unmappable address (should return -1)
+    let invalid_offset = segment::get_fileregion_offset(0x99999999);
+    assert_eq!(invalid_offset, -1, "get_fileregion_offset should return -1 for unmappable address");
+}
+
 fn main() {
     test_segments();
+    test_fileregion_functions();
 }
