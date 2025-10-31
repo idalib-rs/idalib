@@ -230,7 +230,7 @@ impl Operand {
         if self.is_processor_specific()
             || matches!(
                 self.type_(),
-                OperandType::Mem | OperandType::Displ | OperandType::Far | OperandType::Near
+                OperandType::Phrase | OperandType::Mem | OperandType::Displ | OperandType::Far | OperandType::Near
             )
         {
             Some(unsafe { self.inner.__bindgen_anon_3.addr })
