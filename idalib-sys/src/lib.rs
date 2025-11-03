@@ -833,6 +833,7 @@ mod ffix {
         // NOTE: we can't use uval_t here due to it resolving to c_ulonglong,
         // which causes `verify_extern_type` to fail...
         unsafe fn idalib_entry_name(e: c_ulonglong) -> Result<String>;
+        unsafe fn idalib_entry_forwarder(ord: c_ulonglong) -> Result<String>;
 
         unsafe fn idalib_func_flags(f: *const func_t) -> u64;
         unsafe fn idalib_func_name(f: *const func_t) -> Result<String>;
@@ -1141,7 +1142,7 @@ pub const fn from_ea(v: ea_t) -> u64 {
 
 pub mod entry {
     pub use super::ffi::{get_entry, get_entry_ordinal, get_entry_qty, uval_t};
-    pub use super::ffix::idalib_entry_name;
+    pub use super::ffix::{idalib_entry_forwarder, idalib_entry_name};
 }
 
 pub mod insn {
