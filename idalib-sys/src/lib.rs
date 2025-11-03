@@ -1043,6 +1043,7 @@ mod ffix {
         unsafe fn idalib_is_thumb_at(ph: *const processor_t, ea: c_ulonglong) -> bool;
 
         unsafe fn idalib_get_insn_mnem(ea: c_ulonglong) -> String;
+        unsafe fn idalib_get_disasm_line(ea: c_ulonglong) -> String;
 
         unsafe fn idalib_qflow_graph_getn_block(
             f: *const qflow_chart_t,
@@ -1266,7 +1267,7 @@ pub mod util {
         is_align_insn, is_basic_block_end, is_call_insn, is_indirect_jump_insn, is_ret_insn,
         next_head, prev_head, print_insn_mnem, str2reg,
     };
-    pub use super::ffix::idalib_get_insn_mnem;
+    pub use super::ffix::{idalib_get_insn_mnem, idalib_get_disasm_line};
 }
 
 pub mod xref {

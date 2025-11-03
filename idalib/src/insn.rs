@@ -4,7 +4,7 @@ use bitflags::bitflags;
 
 use crate::ffi::insn::insn_t;
 use crate::ffi::insn::op::*;
-use crate::ffi::util::{is_basic_block_end, is_call_insn, is_indirect_jump_insn, is_ret_insn, idalib_get_insn_mnem};
+use crate::ffi::util::{is_basic_block_end, is_call_insn, is_indirect_jump_insn, is_ret_insn, idalib_get_insn_mnem, idalib_get_disasm_line};
 
 pub use crate::ffi::insn::{arm, mips, x86};
 
@@ -151,6 +151,10 @@ impl Insn {
 
     pub fn mnemonic(&self) -> String {
         unsafe { idalib_get_insn_mnem(autocxx::c_ulonglong(self.inner.ea)) }
+    }
+
+    pub fn disasm_line(&self) -> String {
+        unsafe { idalib_get_disasm_line(autocxx::c_ulonglong(self.inner.ea)) }
     }
 
 }

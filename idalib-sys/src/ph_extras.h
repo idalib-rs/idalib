@@ -4,6 +4,7 @@
 #include "idp.hpp"
 #include "segregs.hpp"
 #include "ua.hpp"
+#include "lines.hpp"
 
 #include "cxx.h"
 
@@ -34,6 +35,14 @@ bool idalib_is_thumb_at(const processor_t *ph, ea_t ea) {
 rust::String idalib_get_insn_mnem(ea_t ea) {
   qstring buf;
   if (print_insn_mnem(&buf, ea)) {
+    return rust::String(buf.c_str());
+  }
+  return rust::String("");
+}
+
+rust::String idalib_get_disasm_line(ea_t ea) {
+  qstring buf;
+  if (generate_disasm_line(&buf, ea, GENDSM_REMOVE_TAGS)) {
     return rust::String(buf.c_str());
   }
   return rust::String("");
