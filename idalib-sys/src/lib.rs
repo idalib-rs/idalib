@@ -1098,6 +1098,7 @@ mod ffix {
         unsafe fn idalib_get_bytes(ea: c_ulonglong, buf: &mut Vec<u8>) -> Result<usize>;
         unsafe fn idalib_is_loaded(ea: c_ulonglong) -> bool;
         unsafe fn idalib_is_mapped(ea: c_ulonglong) -> bool;
+        unsafe fn idalib_is_stkvar(flags: c_ulonglong, operand_index: i32) -> bool;
 
         unsafe fn idalib_get_input_file_path() -> String;
 
@@ -1256,7 +1257,7 @@ pub mod bytes {
     pub use super::ffi::{get_flags, is_code, is_data};
     pub use super::ffix::{
         idalib_get_byte, idalib_get_bytes, idalib_get_dword, idalib_get_qword, idalib_get_word,
-        idalib_is_loaded, idalib_is_mapped,
+        idalib_is_loaded, idalib_is_mapped, idalib_is_stkvar,
     };
 }
 

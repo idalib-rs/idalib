@@ -23,6 +23,15 @@ bool idalib_is_loaded(ea_t ea) {
   return is_loaded(ea); 
 }
 
-bool idalib_is_mapped(ea_t ea) { 
+bool idalib_is_mapped(ea_t ea) {
   return getseg(ea) != nullptr;
+}
+
+bool idalib_is_stkvar(flags64_t flags, int operand_index) {
+  if (operand_index == 0) {
+    return is_stkvar0(flags);
+  } else if (operand_index == 1) {
+    return is_stkvar1(flags);
+  }
+  return false;
 }
