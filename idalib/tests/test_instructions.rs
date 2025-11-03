@@ -41,6 +41,82 @@ fn test_instruction_mnemonics() {
     }
 }
 
+fn test_disasm_line() {
+    const FILENAME: &str = "Practical Malware Analysis Lab 01-01.dll_";
+    let dir = TempDir::new("idalib-rs-tests").unwrap();
+    let dst = dir.path().join(FILENAME);
+    let src = tests::get_test_file_path(FILENAME);
+    std::fs::copy(&src, &dst).unwrap();
+
+    let idb = IDB::open(dst).unwrap();
+
+    const EXPECTED_DISASM: &[(u64, &str); 5] = &[
+        (0x10001000, "mov     eax, ecx"),
+        (0x10001002, "mov     ecx, [esp+arg_0]"),
+        (0x10001006, "mov     dl, [ecx]"),
+        (0x10001008, "mov     [eax], dl"),
+        (0x1000100A, "retn    4"),
+    ];
+
+    for &(addr, expected_disasm) in EXPECTED_DISASM {
+        assert!(idb.is_code(addr));
+
+        let insn = idb.insn_at(addr).unwrap();
+        let disasm = insn.disasm_line();
+
+        assert_eq!(expected_disasm, disasm);
+    }
+}
+
+fn test_print_operand() {
+    const FILENAME: &str = "Practical Malware Analysis Lab 01-01.dll_";
+    let dir = TempDir::new("idalib-rs-tests").unwrap();
+    let dst = dir.path().join(FILENAME);
+    let src = tests::get_test_file_path(FILENAME);
+    std::fs::copy(&src, &dst).unwrap();
+
+    let idb = IDB::open(dst).unwrap();
+
+    const EXPECTED_OPERANDS: &[(u64, &[&str]); 5] = &[
+        (0x10001000, &["eax", "ecx"]),
+        (0x10001002, &["ecx", "[esp+arg_0]"]),
+        (0x10001006, &["dl", "[ecx]"]),
+        (0x10001008, &["[eax]", "dl"]),
+        (0x1000100A, &["4"]),
+    ];
+
+    for &(addr, expected_operands) in EXPECTED_OPERANDS {
+        assert!(idb.is_code(addr));
+
+        let insn = idb.insn_at(addr).unwrap();
+
+        for (i, &expected_operand) in expected_operands.iter().enumerate() {
+            let operand = insn.print_operand(i);
+            let operand_clean = idalib::tag_remove(&operand);
+            assert_eq!(expected_operand, operand_clean);
+        }
+    }
+}
+
+fn test_tag_remove() {
+    let input_with_tags = "\x01\x03mov\x02\x03     eax, ecx";
+    let expected_clean = "mov     eax, ecx";
+
+    let cleaned = idalib::tag_remove(input_with_tags);
+    assert_eq!(expected_clean, cleaned);
+
+    let input_no_tags = "mov eax, ecx";
+    let cleaned_no_tags = idalib::tag_remove(input_no_tags);
+    assert_eq!(input_no_tags, cleaned_no_tags);
+
+    let empty_input = "";
+    let cleaned_empty = idalib::tag_remove(empty_input);
+    assert_eq!(empty_input, cleaned_empty);
+}
+
 fn main() {
     test_instruction_mnemonics();
+    test_disasm_line();
+    test_print_operand();
+    test_tag_remove();
 }
