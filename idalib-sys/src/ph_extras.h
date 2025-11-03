@@ -55,3 +55,9 @@ rust::String idalib_print_operand(ea_t ea, int n) {
   }
   return rust::String("");
 }
+
+rust::String idalib_tag_remove(rust::Str input) {
+  qstring buf(input.data(), input.size());
+  tag_remove(&buf);
+  return rust::String(buf.c_str());
+}

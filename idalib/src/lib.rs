@@ -191,3 +191,7 @@ pub fn version() -> Result<IDAVersion, IDAError> {
         build,
     })
 }
+
+pub fn tag_remove(input: &str) -> String {
+    unsafe { ffi::util::idalib_tag_remove(input) }
+}
