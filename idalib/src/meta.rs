@@ -412,6 +412,10 @@ impl<'a> Metadata<'a> {
         if ea != BADADDR { Some(ea.into()) } else { None }
     }
 
+    pub fn imagebase(&self) -> Address {
+        unsafe { idalib_inf_get_imagebase().into() }
+    }
+
     pub fn start_stack_segment(&self) -> Option<Address> {
         let ea = unsafe { idalib_inf_get_start_ss() };
         if ea != BADADDR { Some(ea.into()) } else { None }

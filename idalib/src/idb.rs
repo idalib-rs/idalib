@@ -236,6 +236,10 @@ impl IDB {
         MetadataMut::new()
     }
 
+    pub fn imagebase(&self) -> Address {
+        self.meta().imagebase()
+    }
+
     pub fn processor(&self) -> Processor<'_> {
         let ptr = unsafe { get_ph() };
         Processor::from_ptr(ptr)

@@ -666,7 +666,7 @@ pub mod inf {
         idalib_inf_strlit_names, idalib_inf_strlit_savecase, idalib_inf_strlit_serial_names,
         idalib_inf_test_mode, idalib_inf_trace_flow, idalib_inf_truncate_on_del,
         idalib_inf_unicode_strlits, idalib_inf_use_allasm, idalib_inf_use_flirt,
-        idalib_inf_use_gcc_layout,
+        idalib_inf_use_gcc_layout, idalib_inf_get_imagebase,
     };
 }
 
@@ -1039,6 +1039,7 @@ mod ffix {
         unsafe fn idalib_inf_get_strlit_pref() -> String;
         unsafe fn idalib_inf_get_cc(out: *mut compiler_info_t) -> bool;
         unsafe fn idalib_inf_get_privrange(out: *mut range_t) -> bool;
+        unsafe fn idalib_inf_get_imagebase() -> c_ulonglong;
 
         unsafe fn idalib_ph_id(ph: *const processor_t) -> i32;
         unsafe fn idalib_ph_short_name(ph: *const processor_t) -> String;
