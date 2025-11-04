@@ -787,6 +787,7 @@ mod ffix {
         include!("strings_extras.h");
         include!("typeinf_extras.h");
         include!("plugin_extras.h");
+        include!("insn_extras.h");
 
         type c_short = autocxx::c_short;
         type c_int = autocxx::c_int;
@@ -806,6 +807,8 @@ mod ffix {
         type qflow_chart_t = super::ffi::qflow_chart_t;
         type qbasic_block_t = super::ffi::qbasic_block_t;
         type segment_t = super::ffi::segment_t;
+        type insn_t = super::pod::insn_t;
+        type op_t = super::pod::op_t;
 
         // cfuncptr_t
         type qrefcnt_t_cfunc_t_AutocxxConcrete = super::ffi::qrefcnt_t_cfunc_t_AutocxxConcrete;
@@ -1046,6 +1049,21 @@ mod ffix {
         unsafe fn idalib_get_disasm_line(ea: c_ulonglong) -> String;
         unsafe fn idalib_print_operand(ea: c_ulonglong, n: c_int) -> String;
         unsafe fn idalib_tag_remove(input: &str) -> String;
+
+        // SIB (Scale-Index-Base) decoding functions for x86 operands
+        unsafe fn idalib_sib_base(insn: *const insn_t, op: *const op_t) -> c_int;
+        unsafe fn idalib_sib_index(insn: *const insn_t, op: *const op_t) -> c_int;
+        unsafe fn idalib_sib_scale(op: *const op_t) -> c_int;
+
+        // High-level x86 operand helpers
+        unsafe fn idalib_x86_base_reg(insn: *const insn_t, op: *const op_t) -> c_int;
+        unsafe fn idalib_x86_index_reg(insn: *const insn_t, op: *const op_t) -> c_int;
+        unsafe fn idalib_x86_scale(op: *const op_t) -> c_int;
+        unsafe fn idalib_has_displ(op: *const op_t) -> bool;
+
+        // SIB byte accessors
+        unsafe fn idalib_has_sib(op: *const op_t) -> bool;
+        unsafe fn idalib_get_sib_byte(op: *const op_t) -> u8;
 
         unsafe fn idalib_qflow_graph_getn_block(
             f: *const qflow_chart_t,
@@ -1333,6 +1351,13 @@ pub mod name {
         is_weak_name,
     };
     pub use super::ffix::idalib_get_ea_name;
+}
+
+pub mod x86 {
+    pub use super::ffix::{
+        idalib_sib_base, idalib_sib_index, idalib_sib_scale, idalib_x86_base_reg,
+        idalib_x86_index_reg, idalib_x86_scale, idalib_has_displ, idalib_has_sib, idalib_get_sib_byte,
+    };
 }
 
 pub mod ida {

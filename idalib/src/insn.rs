@@ -4,6 +4,7 @@ use bitflags::bitflags;
 
 use crate::ffi::insn::insn_t;
 use crate::ffi::insn::op::*;
+use crate::ffi::insn::op::op_t;
 use crate::ffi::util::{is_basic_block_end, is_call_insn, is_indirect_jump_insn, is_ret_insn, idalib_get_disasm_line, idalib_get_insn_mnem, idalib_print_operand};
 
 pub use crate::ffi::insn::{arm, mips, x86};
@@ -161,6 +162,64 @@ impl Insn {
         unsafe { idalib_print_operand(autocxx::c_ulonglong(self.inner.ea), autocxx::c_int(n as i32)) }
     }
 
+    pub fn x86_base_reg(&self, operand: &Operand) -> Option<Register> {
+        let base = unsafe { crate::ffi::x86::idalib_x86_base_reg(self.inner_ptr(), operand.inner_ptr()).0 };
+        if base >= 0 {
+            Some(base as u32 as Register)
+        } else {
+            None
+        }
+    }
+
+    pub fn x86_index_reg(&self, operand: &Operand) -> Option<Register> {
+        let index = unsafe { crate::ffi::x86::idalib_x86_index_reg(self.inner_ptr(), operand.inner_ptr()).0 };
+        if index >= 0 {
+            Some(index as u32 as Register)
+        } else {
+            None
+        }
+    }
+
+    pub fn x86_scale(&self, operand: &Operand) -> Option<u32> {
+        let scale_bits = unsafe { crate::ffi::x86::idalib_x86_scale(operand.inner_ptr()).0 };
+        if scale_bits >= 0 {
+            Some(1u32 << (scale_bits as u32))
+        } else {
+            None
+        }
+    }
+
+    pub fn sib_base(&self, operand: &Operand) -> Option<Register> {
+        let base = unsafe { crate::ffi::x86::idalib_sib_base(self.inner_ptr(), operand.inner_ptr()).0 };
+        if base >= 0 {
+            Some(base as u32 as Register)
+        } else {
+            None
+        }
+    }
+
+    pub fn sib_index(&self, operand: &Operand) -> Option<Register> {
+        let index = unsafe { crate::ffi::x86::idalib_sib_index(self.inner_ptr(), operand.inner_ptr()).0 };
+        if index >= 0 {
+            Some(index as u32 as Register)
+        } else {
+            None
+        }
+    }
+
+    pub fn sib_scale(&self, operand: &Operand) -> Option<u32> {
+        let scale_bits = unsafe { crate::ffi::x86::idalib_sib_scale(operand.inner_ptr()).0 };
+        if scale_bits >= 0 {
+            Some(1u32 << (scale_bits as u32))
+        } else {
+            None
+        }
+    }
+
+    fn inner_ptr(&self) -> *const insn_t {
+        &self.inner as *const insn_t
+    }
+
 }
 
 impl Operand {
@@ -314,4 +373,21 @@ impl Operand {
                 | OperandType::IdpSpec5
         )
     }
+
+    pub fn has_sib(&self) -> bool {
+        unsafe { crate::ffi::x86::idalib_has_sib(self.inner_ptr()) }
+    }
+
+    pub fn sib_byte(&self) -> u8 {
+        unsafe { crate::ffi::x86::idalib_get_sib_byte(self.inner_ptr()) }
+    }
+
+    pub fn has_displacement(&self) -> bool {
+        unsafe { crate::ffi::x86::idalib_has_displ(self.inner_ptr()) }
+    }
+
+    fn inner_ptr(&self) -> *const op_t {
+        &self.inner as *const op_t
+    }
 }
+
