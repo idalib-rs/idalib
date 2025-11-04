@@ -71,3 +71,8 @@ harness = false
 name = "test_segments"
 path = "tests/test_segments.rs"
 harness = false
+
+[[test]]
+name = "test_x86_operands"
+path = "tests/test_x86_operands.rs"
+harness = false
