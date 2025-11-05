@@ -55,8 +55,22 @@ fn test_imagebase_consistency() {
     );
 }
 
+fn test_ostype() {
+    const FILENAME: &str = "Practical Malware Analysis Lab 01-01.dll_";
+    let dir = TempDir::new("idalib-rs-tests").unwrap();
+    let dst = dir.path().join(FILENAME);
+    let src = tests::get_test_file_path(FILENAME);
+    std::fs::copy(&src, &dst).unwrap();
+
+    let idb = IDB::open(dst).unwrap();
+
+    let ostype = idb.meta().ostype();
+    assert!(ostype.is_some(), "OSType should be recognized for test binary");
+}
+
 fn main() {
     test_imagebase();
     test_imagebase_via_metadata();
     test_imagebase_consistency();
+    test_ostype();
 }

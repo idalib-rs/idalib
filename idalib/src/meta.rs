@@ -120,6 +120,30 @@ pub enum Compiler {
     UNSURE = COMP_UNSURE as _,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[repr(u16)]
+pub enum OSType {
+    LINUX = 0,
+    WIN32 = 1,
+    MAC = 2,
+    UNIX = 3,
+}
+
+impl OSType {
+    /// Attempt to convert a u16 to an OSType enum value.
+    ///
+    /// Returns Some if the value corresponds to a known OS type, None otherwise.
+    pub fn from_u16(value: u16) -> Option<Self> {
+        match value {
+            0 => Some(OSType::LINUX),
+            1 => Some(OSType::WIN32),
+            2 => Some(OSType::MAC),
+            3 => Some(OSType::UNIX),
+            _ => None,
+        }
+    }
+}
+
 pub struct Metadata<'a> {
     _marker: PhantomData<&'a IDB>,
 }
@@ -243,8 +267,9 @@ impl<'a> Metadata<'a> {
         unsafe { mem::transmute(idalib_inf_get_filetype()) }
     }
 
-    pub fn ostype(&self) -> u16 {
-        unsafe { idalib_inf_get_ostype() }
+    pub fn ostype(&self) -> Option<OSType> {
+        let value = unsafe { idalib_inf_get_ostype() };
+        OSType::from_u16(value)
     }
 
     pub fn apptype(&self) -> u16 {
