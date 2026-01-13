@@ -240,6 +240,7 @@ include_cpp! {
     generate!("lock_segment")
     generate!("getseg")
     generate!("getnseg")
+    generate!("get_segm_num")
     generate!("get_segm_qty")
     generate!("get_segm_by_name")
 
@@ -1153,10 +1154,10 @@ pub mod segment {
     pub use super::ffi::{
         SEG_ABSSYM, SEG_BSS, SEG_CODE, SEG_COMM, SEG_DATA, SEG_GRP, SEG_IMEM, SEG_IMP,
         SEG_MAX_SEGTYPE_CODE, SEG_NORM, SEG_NULL, SEG_UNDF, SEG_XTRN, SEGPERM_EXEC, SEGPERM_MAXVAL,
-        SEGPERM_READ, SEGPERM_WRITE, get_segm_by_name, get_segm_qty, getnseg, getseg, lock_segment,
-        saAbs, saGroup, saRel_MAX_ALIGN_CODE, saRel4K, saRel32Bytes, saRel64Bytes, saRel128Bytes,
-        saRel512Bytes, saRel1024Bytes, saRel2048Bytes, saRelByte, saRelDble, saRelPage, saRelPara,
-        saRelQword, saRelWord, segment_t,
+        SEGPERM_READ, SEGPERM_WRITE, get_segm_by_name, get_segm_num, get_segm_qty, getnseg, getseg,
+        lock_segment, saAbs, saGroup, saRel_MAX_ALIGN_CODE, saRel4K, saRel32Bytes, saRel64Bytes,
+        saRel128Bytes, saRel512Bytes, saRel1024Bytes, saRel2048Bytes, saRelByte, saRelDble,
+        saRelPage, saRelPara, saRelQword, saRelWord, segment_t,
     };
 
     pub use super::ffix::{
