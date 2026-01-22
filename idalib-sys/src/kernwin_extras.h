@@ -89,14 +89,14 @@ struct license_manager_t {
 
 struct config_t {
 #if defined(__MACOS__)
-  uint8_t _skip_a[0x548];
+  uint8_t _skip_a[0x258];
 #elif defined(__LINUX__)
-  uint8_t _skip_a[0x590];
+  uint8_t _skip_a[0x2a0];
 #elif defined(__NT__)
-  uint8_t _skip_a[0x540];
+  uint8_t _skip_a[0x240];
 #endif
-  license_location_t license_location;
-  license_info_t license_info;
+  license_location_t *license_location;
+  license_info_t *license_info;
 };
 
 extern "C" license_manager_t *get_license_manager();
@@ -121,7 +121,7 @@ bool idalib_check_license() {
   qstring estr;
 
   auto nres = manager->_vtbl->get_or_borrow_license(
-      manager, &config->license_location, &config->license_info, flags, &estr);
+      manager, config->license_location, config->license_info, flags, &estr);
 
   return !nres;
 }
