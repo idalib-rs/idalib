@@ -1,7 +1,38 @@
 use std::env;
+use std::fs;
 use std::path::{Path, PathBuf};
 
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct IdaConfig {
+    #[serde(rename = "Paths")]
+    paths: Option<IdaConfigPaths>,
+}
+
+#[derive(Deserialize)]
+struct IdaConfigPaths {
+    #[serde(rename = "ida-install-dir")]
+    ida_install_dir: Option<String>,
+}
+
+/// Try to read the IDA installation path from ~/.idapro/ida-config.json
+fn read_ida_config() -> Option<PathBuf> {
+    let home = env::var("HOME").ok()?;
+    let config_path = PathBuf::from(home).join(".idapro").join("ida-config.json");
+    let contents = fs::read_to_string(&config_path).ok()?;
+    let config: IdaConfig = serde_json::from_str(&contents).ok()?;
+    let path_str = config.paths?.ida_install_dir?;
+    Some(PathBuf::from(path_str))
+}
+
 fn link_path() -> PathBuf {
+    // First try to read from ida-config.json
+    if let Some(path) = read_ida_config() {
+        return path;
+    }
+
+    // Fall back to platform-specific defaults
     #[cfg(target_os = "macos")]
     return PathBuf::from("/Applications/IDA Professional 9.4.app/Contents/MacOS");
 
