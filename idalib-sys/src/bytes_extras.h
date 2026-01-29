@@ -35,3 +35,7 @@ bool idalib_is_stkvar(flags64_t flags, int operand_index) {
   }
   return false;
 }
+
+bool idalib_is_off(flags64_t flags, int operand_index) {
+    return is_off(flags, operand_index);
+}

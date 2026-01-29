@@ -114,6 +114,25 @@ include_cpp! {
     generate!("is_indirect_jump_insn")
 
     generate!("is_ret_insn")
+
+    // instruction feature flags (CF_*)
+    generate!("CF_STOP")
+    generate!("CF_CHG1")
+    generate!("CF_CHG2")
+    generate!("CF_CHG3")
+    generate!("CF_CHG4")
+    generate!("CF_CHG5")
+    generate!("CF_CHG6")
+    generate!("CF_USE1")
+    generate!("CF_USE2")
+    generate!("CF_USE3")
+    generate!("CF_USE4")
+    generate!("CF_USE5")
+    generate!("CF_USE6")
+    generate!("CF_JUMP")
+    generate!("CF_SHFT")
+    generate!("CF_HLL")
+
     generate!("IRI_EXTENDED")
     generate!("IRI_RET_LITERALLY")
     generate!("IRI_SKIP_RETTARGET")
@@ -1066,6 +1085,11 @@ mod ffix {
         unsafe fn idalib_has_sib(op: *const op_t) -> bool;
         unsafe fn idalib_get_sib_byte(op: *const op_t) -> u8;
 
+        // Instruction feature functions
+        unsafe fn idalib_get_canon_feature(itype: u16) -> u32;
+        unsafe fn idalib_has_cf_chg(feature: u32, opnum: u32) -> bool;
+        unsafe fn idalib_has_cf_use(feature: u32, opnum: u32) -> bool;
+
         unsafe fn idalib_qflow_graph_getn_block(
             f: *const qflow_chart_t,
             n: usize,
@@ -1121,6 +1145,7 @@ mod ffix {
         unsafe fn idalib_is_loaded(ea: c_ulonglong) -> bool;
         unsafe fn idalib_is_mapped(ea: c_ulonglong) -> bool;
         unsafe fn idalib_is_stkvar(flags: c_ulonglong, operand_index: i32) -> bool;
+        unsafe fn idalib_is_off(flags: c_ulonglong, operand_index: i32) -> bool;
 
         unsafe fn idalib_get_input_file_path() -> String;
 
@@ -1279,7 +1304,7 @@ pub mod bytes {
     pub use super::ffi::{get_flags, is_code, is_data};
     pub use super::ffix::{
         idalib_get_byte, idalib_get_bytes, idalib_get_dword, idalib_get_qword, idalib_get_word,
-        idalib_is_loaded, idalib_is_mapped, idalib_is_stkvar,
+        idalib_is_loaded, idalib_is_mapped, idalib_is_off, idalib_is_stkvar,
     };
 }
 
@@ -1359,6 +1384,15 @@ pub mod x86 {
         idalib_sib_base, idalib_sib_index, idalib_sib_scale, idalib_x86_base_reg,
         idalib_x86_index_reg, idalib_x86_scale, idalib_has_displ, idalib_has_sib, idalib_get_sib_byte,
     };
+}
+
+pub mod insn_features {
+    pub use super::ffi::{
+        CF_STOP, CF_CHG1, CF_CHG2, CF_CHG3, CF_CHG4, CF_CHG5, CF_CHG6,
+        CF_USE1, CF_USE2, CF_USE3, CF_USE4, CF_USE5, CF_USE6,
+        CF_JUMP, CF_SHFT, CF_HLL,
+    };
+    pub use super::ffix::{idalib_get_canon_feature, idalib_has_cf_chg, idalib_has_cf_use};
 }
 
 pub mod ida {

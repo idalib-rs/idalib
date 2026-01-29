@@ -114,9 +114,36 @@ fn test_tag_remove() {
     assert_eq!(empty_input, cleaned_empty);
 }
 
+fn test_insn_features() {
+    const FILENAME: &str = "Practical Malware Analysis Lab 01-01.dll_";
+    let dir = TempDir::new("idalib-rs-tests").unwrap();
+    let dst = dir.path().join(FILENAME);
+    let src = tests::get_test_file_path(FILENAME);
+    std::fs::copy(&src, &dst).unwrap();
+
+    let idb = IDB::open(dst).unwrap();
+
+    // Test mov eax, ecx at 0x10001000
+    // This instruction should modify operand 0 (eax) and use operand 1 (ecx)
+    let mov_insn = idb.insn_at(0x10001000).unwrap();
+    assert!(mov_insn.modifies_operand(0), "mov should modify first operand");
+    assert!(mov_insn.uses_operand(1), "mov should use second operand");
+    assert!(!mov_insn.breaks_flow(), "mov should not break flow");
+
+    // Test retn at 0x1000100A
+    // This instruction should break flow (CF_STOP)
+    let retn_insn = idb.insn_at(0x1000100A).unwrap();
+    assert!(retn_insn.breaks_flow(), "retn should break flow");
+
+    // Verify canon_feature returns non-zero for valid instructions
+    assert!(mov_insn.canon_feature() != 0, "mov should have non-zero features");
+    assert!(retn_insn.canon_feature() != 0, "retn should have non-zero features");
+}
+
 fn main() {
     test_instruction_mnemonics();
     test_disasm_line();
     test_print_operand();
     test_tag_remove();
+    test_insn_features();
 }

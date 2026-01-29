@@ -135,6 +135,10 @@ impl<'a> AddressFlags<'a> {
     pub fn is_operand_stack_var(&self, operand_index: usize) -> bool {
         unsafe { ffi::bytes::idalib_is_stkvar(self.flags, operand_index as i32) }
     }
+
+    pub fn is_operand_offset(&self, operand_index: usize) -> bool {
+        unsafe { ffi::bytes::idalib_is_off(self.flags, operand_index as i32) }
+    }
 }
 
 pub struct IDA;

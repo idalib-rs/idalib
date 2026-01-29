@@ -216,6 +216,26 @@ impl Insn {
         }
     }
 
+    /// Get canonical instruction features (CF_STOP, CF_CHG*, CF_USE*, etc.)
+    pub fn canon_feature(&self) -> u32 {
+        unsafe { crate::ffi::insn_features::idalib_get_canon_feature(self.inner.itype as u16) }
+    }
+
+    /// Check if instruction breaks sequential flow (CF_STOP)
+    pub fn breaks_flow(&self) -> bool {
+        (self.canon_feature() & crate::ffi::insn_features::CF_STOP) != 0
+    }
+
+    /// Check if instruction modifies the given operand
+    pub fn modifies_operand(&self, operand_index: usize) -> bool {
+        unsafe { crate::ffi::insn_features::idalib_has_cf_chg(self.canon_feature(), operand_index as u32) }
+    }
+
+    /// Check if instruction uses (reads) the given operand
+    pub fn uses_operand(&self, operand_index: usize) -> bool {
+        unsafe { crate::ffi::insn_features::idalib_has_cf_use(self.canon_feature(), operand_index as u32) }
+    }
+
     fn inner_ptr(&self) -> *const insn_t {
         &self.inner as *const insn_t
     }
@@ -344,6 +364,20 @@ impl Operand {
         } else {
             None
         }
+    }
+
+    /// Get specflag1 for phrase/displ operands (used for x86 addressing mode detection).
+    /// Returns the raw specflag1 value which indicates addressing mode:
+    /// - 0: standard [base+offset] or [base] addressing
+    /// - 1: SIB byte present, use specflag2 for base
+    /// - other: unknown/unsupported addressing mode
+    pub fn specflag1(&self) -> i8 {
+        self.inner.specflag1
+    }
+
+    /// Get specflag2 for phrase/displ operands (used for x86 SIB byte base extraction).
+    pub fn specflag2(&self) -> i8 {
+        self.inner.specflag2
     }
 
     pub fn processor_specific_flag3(&self) -> Option<i8> {

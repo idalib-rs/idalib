@@ -2,6 +2,7 @@
 
 #include "intel.hpp"
 #include "ua.hpp"
+#include "idp.hpp"
 
 #include "cxx.h"
 
@@ -47,4 +48,20 @@ bool idalib_has_sib(const op_t *op) {
 // Get the raw SIB byte value
 uint8_t idalib_get_sib_byte(const op_t *op) {
   return op->sib;
+}
+
+// Get instruction features from processor using itype
+uint32_t idalib_get_canon_feature(uint16_t itype) {
+  processor_t *ph = (processor_t*)get_ph();
+  return ph->get_canon_feature(itype);
+}
+
+// Check if instruction modifies operand (wrapper for has_cf_chg)
+bool idalib_has_cf_chg(uint32_t feature, uint32_t opnum) {
+  return has_cf_chg(feature, opnum);
+}
+
+// Check if instruction uses operand (wrapper for has_cf_use)
+bool idalib_has_cf_use(uint32_t feature, uint32_t opnum) {
+  return has_cf_use(feature, opnum);
 }

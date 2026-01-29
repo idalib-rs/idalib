@@ -32,6 +32,27 @@ fn test_get_byte() {
     assert_eq!(idb.get_bytes(0x10001000, 2), vec![0x8B, 0xC1]);
 }
 
+fn test_is_operand_offset() {
+    const FILENAME: &str = "Practical Malware Analysis Lab 01-01.dll_";
+    let dir = TempDir::new("idalib-rs-tests").unwrap();
+    let dst = dir.path().join(FILENAME);
+    let src = tests::get_test_file_path(FILENAME);
+    std::fs::copy(&src, &dst).unwrap();
+
+    let idb = IDB::open(dst).unwrap();
+
+    // 0x10001000: mov eax, ecx
+    let flags = idb.flags_at(0x10001000);
+    assert!(!flags.is_operand_offset(0), "operand 0 should not be an offset for reg-to-reg mov");
+    assert!(!flags.is_operand_offset(1), "operand 1 should not be an offset for reg-to-reg mov");
+
+    // 0x1000102e: mov al, byte_10026054
+    let flags = idb.flags_at(0x1000102E);
+    assert!(!flags.is_operand_offset(0), "operand 0 should not be an offset for off-to-reg mov");
+    assert!(flags.is_operand_offset(1), "operand 1 should be an offset for off-to-reg mov");
+}
+
 fn main() {
     test_get_byte();
+    test_is_operand_offset();
 }
