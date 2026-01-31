@@ -40,7 +40,7 @@ fn test_import_enumeration() {
     let expected_set: std::collections::HashSet<(&str, &str, u32, u64)> = EXPECTED_IMPORTS.iter().cloned().collect();
     let actual_set: std::collections::HashSet<(&str, &str, u32, u64)> = imports
         .iter()
-        .map(|i| (i.module_name.as_str(), i.function_name.as_str(), i.ordinal, i.address))
+        .map(|i| (i.module_name(), i.function_name(), i.ordinal(), i.address()))
         .collect();
 
     for &expected_import in &expected_set {

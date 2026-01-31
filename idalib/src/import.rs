@@ -6,10 +6,28 @@ use crate::idb::IDB;
 
 #[derive(Debug, Clone)]
 pub struct Import {
-    pub module_name: String,
-    pub function_name: String,
-    pub address: Address,
-    pub ordinal: u32,
+    module_name: String,
+    function_name: String,
+    address: Address,
+    ordinal: u32,
+}
+
+impl Import {
+    pub fn module_name(&self) -> &str {
+        &self.module_name
+    }
+
+    pub fn function_name(&self) -> &str {
+        &self.function_name
+    }
+
+    pub fn address(&self) -> Address {
+        self.address
+    }
+
+    pub fn ordinal(&self) -> u32 {
+        self.ordinal
+    }
 }
 
 pub struct ImportIterator<'a> {
