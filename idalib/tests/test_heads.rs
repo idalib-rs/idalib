@@ -29,7 +29,7 @@ fn test_heads_iterator() {
     let start_addr = 0x10001000;
     let end_addr = 0x10001020;
 
-    let heads: Vec<_> = idb.heads(start_addr.into(), end_addr.into()).collect();
+    let heads: Vec<_> = idb.heads(start_addr.into()..end_addr.into()).collect();
 
     assert!(!heads.is_empty());
     assert!(heads.len() >= 3);
