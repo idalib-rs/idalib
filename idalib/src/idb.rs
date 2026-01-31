@@ -279,7 +279,22 @@ impl IDB {
         unsafe { get_func_qty() }
     }
 
-    pub fn heads<'a>(&'a self, start: Address, end: Address) -> HeadsIterator<'a> {
+    fn bounds_to_range(&self, range: impl RangeBounds<Address>) -> (Address, Address) {
+        let start = match range.start_bound() {
+            Bound::Included(&s) => s,
+            Bound::Excluded(&s) => s.saturating_add(1),
+            Bound::Unbounded => 0,
+        };
+        let end = match range.end_bound() {
+            Bound::Included(&e) => e.saturating_add(1),
+            Bound::Excluded(&e) => e,
+            Bound::Unbounded => BADADDR.into(),
+        };
+        (start, end)
+    }
+
+    pub fn heads<'a>(&'a self, range: impl RangeBounds<Address>) -> HeadsIterator<'a> {
+        let (start, end) = self.bounds_to_range(range);
         HeadsIterator {
             idb: self,
             current: Some(start),
@@ -544,15 +559,15 @@ impl IDB {
     }
 
     pub fn find_bytes(&self, pattern: impl AsRef<str>) -> Option<Address> {
-        self.find_bytes_range(pattern, 0, u64::MAX)
+        self.find_bytes_range(.., pattern)
     }
 
     pub fn find_bytes_range(
         &self,
+        range: impl RangeBounds<Address>,
         pattern: impl AsRef<str>,
-        start_ea: Address,
-        end_ea: Address,
     ) -> Option<Address> {
+        let (start_ea, end_ea) = self.bounds_to_range(range);
         let s = CString::new(pattern.as_ref()).ok()?;
         let addr =
             unsafe { idalib_bin_search(start_ea.into(), end_ea.into(), s.as_ptr(), 0.into()) };
@@ -569,7 +584,7 @@ impl IDB {
     ) -> impl Iterator<Item = Address> + 'a {
         let mut cur = 0u64;
         std::iter::from_fn(move || {
-            cur = self.find_bytes_range(pattern.as_ref(), cur, u64::MAX)?;
+            cur = self.find_bytes_range(cur.., pattern.as_ref())?;
             let found = cur;
             cur = self.find_defined(cur).unwrap_or(BADADDR.into());
             Some(found)
@@ -586,16 +601,16 @@ impl IDB {
     }
 
     pub fn find_binary(&self, bytes: &[u8], mask: &[u8]) -> Option<Address> {
-        self.find_binary_range(bytes, mask, 0, u64::MAX)
+        self.find_binary_range(.., bytes, mask)
     }
 
     pub fn find_binary_range(
         &self,
+        range: impl RangeBounds<Address>,
         bytes: &[u8],
         mask: &[u8],
-        start_ea: Address,
-        end_ea: Address,
     ) -> Option<Address> {
+        let (start_ea, end_ea) = self.bounds_to_range(range);
         if bytes.len() != mask.len() {
             return None;
         }

@@ -53,17 +53,17 @@ fn test_find_bytes() {
     let idb = IDB::open(dst).unwrap();
 
     assert_eq!(
-        idb.find_bytes_range("8B C1 8B 4C", 0x10001000, 0x10002000),
+        idb.find_bytes_range(0x10001000..0x10002000, "8B C1 8B 4C"),
         Some(0x10001000)
     );
 
     assert_eq!(
-        idb.find_bytes_range("8B ?? 8B ??", 0x10001000, 0x10002000),
+        idb.find_bytes_range(0x10001000..0x10002000, "8B ?? 8B ??"),
         Some(0x10001000)
     );
 
     assert_eq!(
-        idb.find_bytes_range("B8 F8 11", 0x10001000, 0x10002000),
+        idb.find_bytes_range(0x10001000..0x10002000, "B8 F8 11"),
         Some(0x10001010)
     );
 }
@@ -97,17 +97,17 @@ fn test_find_binary() {
 
     let bytes = vec![0x8B, 0xC1, 0x8B, 0x4C];
     let mask = vec![0xFF, 0xFF, 0xFF, 0xFF];
-    let result = idb.find_binary_range(&bytes, &mask, 0x10001000, 0x10002000);
+    let result = idb.find_binary_range(0x10001000..0x10002000, &bytes, &mask);
     assert_eq!(result, Some(0x10001000));
 
     let bytes2 = vec![0x8B, 0x00, 0x8B, 0x00];
     let mask2 = vec![0xFF, 0x00, 0xFF, 0x00];
-    let result2 = idb.find_binary_range(&bytes2, &mask2, 0x10001000, 0x10002000);
+    let result2 = idb.find_binary_range(0x10001000..0x10002000, &bytes2, &mask2);
     assert_eq!(result2, Some(0x10001000));
 
     let bytes3 = vec![0xB8, 0xF8, 0x11];
     let mask3 = vec![0xFF, 0xFF, 0xFF];
-    let result3 = idb.find_binary_range(&bytes3, &mask3, 0x10001000, 0x10002000);
+    let result3 = idb.find_binary_range(0x10001000..0x10002000, &bytes3, &mask3);
     assert_eq!(result3, Some(0x10001010));
 }
 
