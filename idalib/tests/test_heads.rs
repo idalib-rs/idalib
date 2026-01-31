@@ -26,17 +26,17 @@ fn test_heads_iterator() {
 
     let idb = IDB::open(dst).unwrap();
 
-    let start_addr = 0x10001000;
-    let end_addr = 0x10001020;
+    let start_addr = 0x10001000u64;
+    let end_addr = 0x10001020u64;
 
-    let heads: Vec<_> = idb.heads(start_addr.into()..end_addr.into()).collect();
+    let heads: Vec<_> = idb.heads(start_addr..end_addr).collect();
 
     assert!(!heads.is_empty());
     assert!(heads.len() >= 3);
 
-    assert_eq!(heads[0], start_addr.into());
-    assert_eq!(heads[1], 0x10001002_u64.into());
-    assert_eq!(heads[2], 0x10001006_u64.into());
+    assert_eq!(heads[0], start_addr);
+    assert_eq!(heads[1], 0x10001002_u64);
+    assert_eq!(heads[2], 0x10001006_u64);
 
     for head in &heads {
         assert!((*head as u64) >= start_addr);
