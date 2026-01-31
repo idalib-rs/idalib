@@ -28,7 +28,12 @@ fn read_ida_config() -> Option<PathBuf> {
 
 fn link_path() -> PathBuf {
     // First try to read from ida-config.json
-    if let Some(path) = read_ida_config() {
+    if let Some(mut path) = read_ida_config() {
+        #[cfg(target_os = "macos")]
+        if path.extension().map_or(false, |ext| ext == "app") {
+            path.push("Contents");
+            path.push("MacOS");
+        }
         return path;
     }
 
