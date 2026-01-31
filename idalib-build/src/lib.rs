@@ -16,10 +16,28 @@ struct IdaConfigPaths {
     ida_install_dir: Option<String>,
 }
 
-/// Try to read the IDA installation path from ~/.idapro/ida-config.json
+/// Try to read the IDA installation path from the IDA configuration file
 fn read_ida_config() -> Option<PathBuf> {
-    let home = env::var("HOME").ok()?;
-    let config_path = PathBuf::from(home).join(".idapro").join("ida-config.json");
+    let config_dir = if let Ok(ida_usr) = env::var("IDAUSR") {
+        PathBuf::from(ida_usr)
+    } else {
+        #[cfg(target_os = "windows")]
+        {
+            PathBuf::from(env::var("APPDATA").ok()?)
+                .join("Hex-Rays")
+                .join("IDA Pro")
+        }
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
+        {
+            PathBuf::from(env::var("HOME").ok()?).join(".idapro")
+        }
+        #[cfg(not(any(target_os = "windows", target_os = "linux", target_os = "macos")))]
+        {
+            return None;
+        }
+    };
+
+    let config_path = config_dir.join("ida-config.json");
     let contents = fs::read_to_string(&config_path).ok()?;
     let config: IdaConfig = serde_json::from_str(&contents).ok()?;
     let path_str = config.paths?.ida_install_dir?;
