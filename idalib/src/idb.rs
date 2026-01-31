@@ -1,6 +1,7 @@
 use std::ffi::CString;
 use std::marker::PhantomData;
 use std::mem::MaybeUninit;
+use std::ops::{Bound, RangeBounds};
 use std::path::{Path, PathBuf};
 
 use crate::ffi::BADADDR;
@@ -39,7 +40,7 @@ use crate::plugin::Plugin;
 use crate::processor::Processor;
 use crate::segment::{Segment, SegmentId};
 use crate::strings::StringList;
-use crate::xref::{XRef, XRefQuery};
+use crate::xref::{XRef, XRefFromIterator, XRefQuery, XRefToIterator};
 use crate::{Address, AddressFlags, IDAError, IDARuntimeHandle, prepare_library};
 
 pub struct IDB {
@@ -757,34 +758,6 @@ impl<'a> Iterator for HeadsIterator<'a> {
         let next_addr = self.idb.next_head_with(current, self.end);
         self.current = next_addr;
 
-        Some(current)
-    }
-}
-
-pub struct XRefToIterator<'a> {
-    current: Option<XRef<'a>>,
-}
-
-impl<'a> Iterator for XRefToIterator<'a> {
-    type Item = XRef<'a>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let current = self.current.take()?;
-        self.current = current.next_to();
-        Some(current)
-    }
-}
-
-pub struct XRefFromIterator<'a> {
-    current: Option<XRef<'a>>,
-}
-
-impl<'a> Iterator for XRefFromIterator<'a> {
-    type Item = XRef<'a>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let current = self.current.take()?;
-        self.current = current.next_from();
         Some(current)
     }
 }

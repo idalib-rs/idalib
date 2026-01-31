@@ -146,3 +146,31 @@ impl<'a> XRef<'a> {
         }
     }
 }
+
+pub struct XRefToIterator<'a> {
+    pub(crate) current: Option<XRef<'a>>,
+}
+
+impl<'a> Iterator for XRefToIterator<'a> {
+    type Item = XRef<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let current = self.current.take()?;
+        self.current = current.next_to();
+        Some(current)
+    }
+}
+
+pub struct XRefFromIterator<'a> {
+    pub(crate) current: Option<XRef<'a>>,
+}
+
+impl<'a> Iterator for XRefFromIterator<'a> {
+    type Item = XRef<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let current = self.current.take()?;
+        self.current = current.next_from();
+        Some(current)
+    }
+}
