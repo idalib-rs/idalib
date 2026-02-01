@@ -2,7 +2,8 @@ use tempdir::TempDir;
 
 use idalib::idb::IDB;
 use idalib::segment::{self, SegmentPermissions, SegmentType};
-use idalib::tests;
+#[path = "../src/tests.rs"]
+mod tests;
 
 #[derive(Debug, Clone, PartialEq)]
 struct ExpectedSegment {

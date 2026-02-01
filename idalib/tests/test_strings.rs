@@ -1,7 +1,8 @@
 use tempdir::TempDir;
 
 use idalib::idb::IDB;
-use idalib::tests;
+#[path = "../src/tests.rs"]
+mod tests;
 
 // .data:10026038 ; CHAR Name[]
 // .data:10026038 Name            db 'SADFHUHF',0         ; DATA XREF: DllMain(x,x,x)+38↑o

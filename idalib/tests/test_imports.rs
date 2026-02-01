@@ -1,7 +1,8 @@
 use tempdir::TempDir;
 
 use idalib::idb::IDB;
-use idalib::tests;
+#[path = "../src/tests.rs"]
+mod tests;
 
 fn test_import_enumeration() {
     const FILENAME: &str = "Practical Malware Analysis Lab 01-01.dll_";
