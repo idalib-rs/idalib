@@ -92,7 +92,7 @@ fn test_print_operand() {
         let insn = idb.insn_at(addr).unwrap();
 
         for (i, &expected_operand) in expected_operands.iter().enumerate() {
-            let operand = insn.print_operand(i);
+            let operand = insn.print_operand(i).expect("operand should exist");
             let operand_clean = idalib::tag_remove(&operand);
             assert_eq!(expected_operand, operand_clean);
         }

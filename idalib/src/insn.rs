@@ -158,8 +158,10 @@ impl Insn {
         unsafe { idalib_get_disasm_line(autocxx::c_ulonglong(self.inner.ea)) }
     }
 
-    pub fn print_operand(&self, n: usize) -> String {
-        unsafe { idalib_print_operand(autocxx::c_ulonglong(self.inner.ea), autocxx::c_int(n as i32)) }
+    pub fn print_operand(&self, n: usize) -> Option<String> {
+        self.operand(n).map(|_| unsafe {
+            idalib_print_operand(autocxx::c_ulonglong(self.inner.ea), autocxx::c_int(n as i32))
+        })
     }
 
     pub fn x86_base_reg(&self, operand: &Operand) -> Option<Register> {
