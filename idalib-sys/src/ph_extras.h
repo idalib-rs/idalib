@@ -37,7 +37,7 @@ rust::String idalib_get_insn_mnem(ea_t ea) {
   if (print_insn_mnem(&buf, ea)) {
     return rust::String(buf.c_str());
   }
-  return rust::String("");
+  return rust::String();
 }
 
 rust::String idalib_get_disasm_line(ea_t ea) {
@@ -45,7 +45,7 @@ rust::String idalib_get_disasm_line(ea_t ea) {
   if (generate_disasm_line(&buf, ea, GENDSM_REMOVE_TAGS)) {
     return rust::String(buf.c_str());
   }
-  return rust::String("");
+  return rust::String();
 }
 
 rust::String idalib_print_operand(ea_t ea, int n) {
@@ -53,7 +53,7 @@ rust::String idalib_print_operand(ea_t ea, int n) {
   if (print_operand(&buf, ea, n)) {
     return rust::String(buf.c_str());
   }
-  return rust::String("");
+  return rust::String();
 }
 
 rust::String idalib_tag_remove(rust::Str input) {
