@@ -1,4 +1,4 @@
-use std::mem;
+use std::{fmt, mem};
 
 use bitflags::bitflags;
 
@@ -21,9 +21,34 @@ pub struct Insn {
 }
 
 #[derive(Clone, Copy)]
-#[repr(transparent)]
 pub struct Operand {
     inner: op_t,
+    ea: Address,
+}
+
+impl fmt::Display for Insn {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            unsafe { idalib_get_disasm_line(autocxx::c_ulonglong(self.inner.ea)) }
+        )
+    }
+}
+
+impl fmt::Display for Operand {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            unsafe {
+                idalib_get_insn_operand(
+                    autocxx::c_ulonglong(self.ea),
+                    autocxx::c_int(self.inner.n as i32),
+                )
+            }
+        )
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -137,7 +162,10 @@ impl Insn {
         let op = self.inner.ops.get(n)?;
 
         if op.type_ != o_void {
-            Some(Operand { inner: *op })
+            Some(Operand {
+                inner: *op,
+                ea: self.inner.ea,
+            })
         } else {
             None
         }
@@ -181,16 +209,6 @@ impl Insn {
 
     pub fn mnemonic(&self) -> String {
         unsafe { idalib_get_insn_mnem(autocxx::c_ulonglong(self.inner.ea)) }
-    }
-
-    pub fn disasm_line(&self) -> String {
-        unsafe { idalib_get_disasm_line(autocxx::c_ulonglong(self.inner.ea)) }
-    }
-
-    pub fn print_operand(&self, n: usize) -> Option<String> {
-        self.operand(n).map(|_| unsafe {
-            idalib_get_insn_operand(autocxx::c_ulonglong(self.inner.ea), autocxx::c_int(n as i32))
-        })
     }
 
     pub fn x86_base_reg(&self, operand: &Operand) -> Option<Register> {
@@ -469,4 +487,3 @@ impl Operand {
         &self.inner as *const op_t
     }
 }
-
