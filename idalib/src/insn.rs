@@ -89,6 +89,35 @@ bitflags! {
     }
 }
 
+bitflags! {
+    #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub struct CanonFeature: u32 {
+        const STOP = crate::ffi::insn_features::CF_STOP;
+        const CHG1 = crate::ffi::insn_features::CF_CHG1;
+        const CHG2 = crate::ffi::insn_features::CF_CHG2;
+        const CHG3 = crate::ffi::insn_features::CF_CHG3;
+        const CHG4 = crate::ffi::insn_features::CF_CHG4;
+        const CHG5 = crate::ffi::insn_features::CF_CHG5;
+        const CHG6 = crate::ffi::insn_features::CF_CHG6;
+        const USE1 = crate::ffi::insn_features::CF_USE1;
+        const USE2 = crate::ffi::insn_features::CF_USE2;
+        const USE3 = crate::ffi::insn_features::CF_USE3;
+        const USE4 = crate::ffi::insn_features::CF_USE4;
+        const USE5 = crate::ffi::insn_features::CF_USE5;
+        const USE6 = crate::ffi::insn_features::CF_USE6;
+        const JUMP = crate::ffi::insn_features::CF_JUMP;
+        const SHFT = crate::ffi::insn_features::CF_SHFT;
+        const HLL = crate::ffi::insn_features::CF_HLL;
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[repr(i8)]
+pub enum AddressingMode {
+    Base = 0,
+    Sib = 1,
+}
+
 pub type InsnType = u16;
 
 impl Insn {
@@ -219,23 +248,35 @@ impl Insn {
     }
 
     /// Get canonical instruction features (CF_STOP, CF_CHG*, CF_USE*, etc.)
-    pub fn canon_feature(&self) -> u32 {
-        unsafe { crate::ffi::insn_features::idalib_get_canon_feature(self.inner.itype as u16) }
+    pub fn canon_feature(&self) -> CanonFeature {
+        CanonFeature::from_bits_retain(unsafe {
+            crate::ffi::insn_features::idalib_get_canon_feature(self.inner.itype as u16)
+        })
     }
 
     /// Check if instruction breaks sequential flow (CF_STOP)
     pub fn breaks_flow(&self) -> bool {
-        (self.canon_feature() & crate::ffi::insn_features::CF_STOP) != 0
+        self.canon_feature().contains(CanonFeature::STOP)
     }
 
     /// Check if instruction modifies the given operand
     pub fn modifies_operand(&self, operand_index: usize) -> bool {
-        unsafe { crate::ffi::insn_features::idalib_has_cf_chg(self.canon_feature(), operand_index as u32) }
+        unsafe {
+            crate::ffi::insn_features::idalib_has_cf_chg(
+                self.canon_feature().bits(),
+                operand_index as u32,
+            )
+        }
     }
 
     /// Check if instruction uses (reads) the given operand
     pub fn uses_operand(&self, operand_index: usize) -> bool {
-        unsafe { crate::ffi::insn_features::idalib_has_cf_use(self.canon_feature(), operand_index as u32) }
+        unsafe {
+            crate::ffi::insn_features::idalib_has_cf_use(
+                self.canon_feature().bits(),
+                operand_index as u32,
+            )
+        }
     }
 
     fn inner_ptr(&self) -> *const insn_t {

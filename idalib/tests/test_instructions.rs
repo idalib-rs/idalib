@@ -137,8 +137,14 @@ fn test_insn_features() {
     assert!(retn_insn.breaks_flow(), "retn should break flow");
 
     // Verify canon_feature returns non-zero for valid instructions
-    assert!(mov_insn.canon_feature() != 0, "mov should have non-zero features");
-    assert!(retn_insn.canon_feature() != 0, "retn should have non-zero features");
+    assert!(
+        !mov_insn.canon_feature().is_empty(),
+        "mov should have non-zero features"
+    );
+    assert!(
+        !retn_insn.canon_feature().is_empty(),
+        "retn should have non-zero features"
+    );
 }
 
 fn main() {
