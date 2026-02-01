@@ -20,6 +20,64 @@ bitflags = "2"
 cxx = "1"
 idalib-sys = { version = "0.7", path = "../idalib-sys" }
 thiserror = "1"
+ 
+[dev-dependencies]
+tempdir = "0.3"
 
 [build-dependencies]
 idalib-build = { version = "0.7", path = "../idalib-build" }
+
+# Tests that load idalib must be run on the main thread;
+# however, the default test harness runs tests in threads,
+# even if you set `--test-threads=1`.
+# So we have to use custom test binaries to run our IDB tests.
+# see: https://stackoverflow.com/a/43458688
+[[test]]
+name = "test_bytes"
+path = "tests/test_bytes.rs"
+harness = false
+
+[[test]]
+name = "test_heads"
+path = "tests/test_heads.rs"
+harness = false
+
+[[test]]
+name = "test_imports"
+path = "tests/test_imports.rs"
+harness = false
+
+[[test]]
+name = "test_strings"
+path = "tests/test_strings.rs"
+harness = false
+
+[[test]]
+name = "test_xrefs"
+path = "tests/test_xrefs.rs"
+harness = false
+
+[[test]]
+name = "test_instructions"
+path = "tests/test_instructions.rs"
+harness = false
+
+[[test]]
+name = "test_search"
+path = "tests/test_search.rs"
+harness = false
+
+[[test]]
+name = "test_segments"
+path = "tests/test_segments.rs"
+harness = false
+
+[[test]]
+name = "test_x86_operands"
+path = "tests/test_x86_operands.rs"
+harness = false
+
+[[test]]
+name = "test_metadata"
+path = "tests/test_metadata.rs"
+harness = false

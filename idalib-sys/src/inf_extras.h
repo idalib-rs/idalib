@@ -393,3 +393,5 @@ rust::String idalib_inf_get_strlit_pref() {
 bool idalib_inf_get_cc(compiler_info_t *out)  { return inf_get_cc(out); }
 
 bool idalib_inf_get_privrange(range_t *out)  { return inf_get_privrange(out); }
+
+ea_t idalib_inf_get_imagebase()  { return get_imagebase(); }

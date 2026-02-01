@@ -1,10 +1,11 @@
-use std::mem;
+use std::{fmt, mem};
 
 use bitflags::bitflags;
 
 use crate::ffi::insn::insn_t;
 use crate::ffi::insn::op::*;
-use crate::ffi::util::{is_basic_block_end, is_call_insn, is_indirect_jump_insn, is_ret_insn};
+use crate::ffi::insn::op::op_t;
+use crate::ffi::util::{is_basic_block_end, is_call_insn, is_indirect_jump_insn, is_ret_insn, idalib_get_disasm_line, idalib_get_insn_mnem, idalib_get_insn_operand};
 
 pub use crate::ffi::insn::{arm, mips, x86};
 
@@ -20,9 +21,34 @@ pub struct Insn {
 }
 
 #[derive(Clone, Copy)]
-#[repr(transparent)]
 pub struct Operand {
     inner: op_t,
+    ea: Address,
+}
+
+impl fmt::Display for Insn {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            unsafe { idalib_get_disasm_line(autocxx::c_ulonglong(self.inner.ea)) }
+        )
+    }
+}
+
+impl fmt::Display for Operand {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            unsafe {
+                idalib_get_insn_operand(
+                    autocxx::c_ulonglong(self.ea),
+                    autocxx::c_int(self.inner.n as i32),
+                )
+            }
+        )
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -88,6 +114,35 @@ bitflags! {
     }
 }
 
+bitflags! {
+    #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub struct CanonFeature: u32 {
+        const STOP = crate::ffi::insn_features::CF_STOP;
+        const CHG1 = crate::ffi::insn_features::CF_CHG1;
+        const CHG2 = crate::ffi::insn_features::CF_CHG2;
+        const CHG3 = crate::ffi::insn_features::CF_CHG3;
+        const CHG4 = crate::ffi::insn_features::CF_CHG4;
+        const CHG5 = crate::ffi::insn_features::CF_CHG5;
+        const CHG6 = crate::ffi::insn_features::CF_CHG6;
+        const USE1 = crate::ffi::insn_features::CF_USE1;
+        const USE2 = crate::ffi::insn_features::CF_USE2;
+        const USE3 = crate::ffi::insn_features::CF_USE3;
+        const USE4 = crate::ffi::insn_features::CF_USE4;
+        const USE5 = crate::ffi::insn_features::CF_USE5;
+        const USE6 = crate::ffi::insn_features::CF_USE6;
+        const JUMP = crate::ffi::insn_features::CF_JUMP;
+        const SHFT = crate::ffi::insn_features::CF_SHFT;
+        const HLL = crate::ffi::insn_features::CF_HLL;
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[repr(i8)]
+pub enum AddressingMode {
+    Base = 0,
+    Sib = 1,
+}
+
 pub type InsnType = u16;
 
 impl Insn {
@@ -107,7 +162,10 @@ impl Insn {
         let op = self.inner.ops.get(n)?;
 
         if op.type_ != o_void {
-            Some(Operand { inner: *op })
+            Some(Operand {
+                inner: *op,
+                ea: self.inner.ea,
+            })
         } else {
             None
         }
@@ -148,6 +206,101 @@ impl Insn {
     pub fn is_ret_with(&self, iri: IsReturnFlags) -> bool {
         unsafe { is_ret_insn(&self.inner, iri.bits()) }
     }
+
+    pub fn mnemonic(&self) -> String {
+        unsafe { idalib_get_insn_mnem(autocxx::c_ulonglong(self.inner.ea)) }
+    }
+
+    pub fn x86_base_reg(&self, operand: &Operand) -> Option<Register> {
+        let base = unsafe { crate::ffi::x86::idalib_x86_base_reg(self.inner_ptr(), operand.inner_ptr()).0 };
+        if base >= 0 {
+            Some(base as u32 as Register)
+        } else {
+            None
+        }
+    }
+
+    pub fn x86_index_reg(&self, operand: &Operand) -> Option<Register> {
+        let index = unsafe { crate::ffi::x86::idalib_x86_index_reg(self.inner_ptr(), operand.inner_ptr()).0 };
+        if index >= 0 {
+            Some(index as u32 as Register)
+        } else {
+            None
+        }
+    }
+
+    pub fn x86_scale(&self, operand: &Operand) -> Option<u32> {
+        let scale_bits = unsafe { crate::ffi::x86::idalib_x86_scale(operand.inner_ptr()).0 };
+        if scale_bits >= 0 {
+            Some(1u32 << (scale_bits as u32))
+        } else {
+            None
+        }
+    }
+
+    pub fn sib_base(&self, operand: &Operand) -> Option<Register> {
+        let base = unsafe { crate::ffi::x86::idalib_sib_base(self.inner_ptr(), operand.inner_ptr()).0 };
+        if base >= 0 {
+            Some(base as u32 as Register)
+        } else {
+            None
+        }
+    }
+
+    pub fn sib_index(&self, operand: &Operand) -> Option<Register> {
+        let index = unsafe { crate::ffi::x86::idalib_sib_index(self.inner_ptr(), operand.inner_ptr()).0 };
+        if index >= 0 {
+            Some(index as u32 as Register)
+        } else {
+            None
+        }
+    }
+
+    pub fn sib_scale(&self, operand: &Operand) -> Option<u32> {
+        let scale_bits = unsafe { crate::ffi::x86::idalib_sib_scale(operand.inner_ptr()).0 };
+        if scale_bits >= 0 {
+            Some(1u32 << (scale_bits as u32))
+        } else {
+            None
+        }
+    }
+
+    /// Get canonical instruction features (CF_STOP, CF_CHG*, CF_USE*, etc.)
+    pub fn canon_feature(&self) -> CanonFeature {
+        CanonFeature::from_bits_retain(unsafe {
+            crate::ffi::insn_features::idalib_get_canon_feature(self.inner.itype as u16)
+        })
+    }
+
+    /// Check if instruction breaks sequential flow (CF_STOP)
+    pub fn breaks_flow(&self) -> bool {
+        self.canon_feature().contains(CanonFeature::STOP)
+    }
+
+    /// Check if instruction modifies the given operand
+    pub fn modifies_operand(&self, operand_index: usize) -> bool {
+        unsafe {
+            crate::ffi::insn_features::idalib_has_cf_chg(
+                self.canon_feature().bits(),
+                operand_index as u32,
+            )
+        }
+    }
+
+    /// Check if instruction uses (reads) the given operand
+    pub fn uses_operand(&self, operand_index: usize) -> bool {
+        unsafe {
+            crate::ffi::insn_features::idalib_has_cf_use(
+                self.canon_feature().bits(),
+                operand_index as u32,
+            )
+        }
+    }
+
+    fn inner_ptr(&self) -> *const insn_t {
+        &self.inner as *const insn_t
+    }
+
 }
 
 impl Operand {
@@ -225,7 +378,7 @@ impl Operand {
         if self.is_processor_specific()
             || matches!(
                 self.type_(),
-                OperandType::Mem | OperandType::Displ | OperandType::Far | OperandType::Near
+                OperandType::Phrase | OperandType::Mem | OperandType::Displ | OperandType::Far | OperandType::Near
             )
         {
             Some(unsafe { self.inner.__bindgen_anon_3.addr })
@@ -274,6 +427,22 @@ impl Operand {
         }
     }
 
+    /// Get addressing mode for phrase/displ operands (used for x86).
+    /// Returns:
+    /// - Base: standard [base+offset] or [base] addressing
+    /// - Sib: SIB byte present, use specflag2 for base
+    pub fn addressing_mode(&self) -> AddressingMode {
+        match self.inner.specflag1 {
+            1 => AddressingMode::Sib,
+            _ => AddressingMode::Base,
+        }
+    }
+
+    /// Get specflag2 for phrase/displ operands (used for x86 SIB byte base extraction).
+    pub fn specflag2(&self) -> i8 {
+        self.inner.specflag2
+    }
+
     pub fn processor_specific_flag3(&self) -> Option<i8> {
         if self.is_processor_specific() {
             Some(self.inner.specflag3)
@@ -300,5 +469,21 @@ impl Operand {
                 | OperandType::IdpSpec4
                 | OperandType::IdpSpec5
         )
+    }
+
+    pub fn has_sib(&self) -> bool {
+        unsafe { crate::ffi::x86::idalib_has_sib(self.inner_ptr()) }
+    }
+
+    pub fn sib_byte(&self) -> u8 {
+        unsafe { crate::ffi::x86::idalib_get_sib_byte(self.inner_ptr()) }
+    }
+
+    pub fn has_displacement(&self) -> bool {
+        unsafe { crate::ffi::x86::idalib_has_displ(self.inner_ptr()) }
+    }
+
+    fn inner_ptr(&self) -> *const op_t {
+        &self.inner as *const op_t
     }
 }

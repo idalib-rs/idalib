@@ -81,6 +81,7 @@ pub mod bookmarks;
 pub mod decompiler;
 pub mod func;
 pub mod idb;
+pub mod import;
 pub mod insn;
 pub mod license;
 pub mod meta;
@@ -90,6 +91,9 @@ pub mod processor;
 pub mod segment;
 pub mod strings;
 pub mod xref;
+
+#[cfg(test)]
+pub mod tests;
 
 pub use idalib_sys as ffi;
 
@@ -117,6 +121,14 @@ impl<'a> AddressFlags<'a> {
 
     pub fn is_data(&self) -> bool {
         unsafe { ffi::bytes::is_data(self.flags) }
+    }
+
+    pub fn is_operand_stack_var(&self, operand_index: usize) -> bool {
+        unsafe { ffi::bytes::idalib_is_stkvar(self.flags, operand_index as i32) }
+    }
+
+    pub fn is_operand_offset(&self, operand_index: usize) -> bool {
+        unsafe { ffi::bytes::idalib_is_off(self.flags, operand_index as i32) }
     }
 }
 
@@ -181,4 +193,8 @@ pub fn version() -> Result<IDAVersion, IDAError> {
         minor,
         build,
     })
+}
+
+pub fn tag_remove(input: &str) -> String {
+    unsafe { ffi::util::idalib_tag_remove(input) }
 }

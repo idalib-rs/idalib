@@ -1,6 +1,7 @@
 use std::ffi::CString;
 use std::marker::PhantomData;
 use std::mem::MaybeUninit;
+use std::ops::{Bound, RangeBounds};
 use std::path::{Path, PathBuf};
 
 use crate::ffi::BADADDR;
@@ -17,15 +18,24 @@ use crate::ffi::ida::{
 };
 use crate::ffi::insn::decode;
 use crate::ffi::loader::find_plugin;
+use crate::ffi::name::idalib_get_ea_name;
 use crate::ffi::processor::get_ph;
-use crate::ffi::search::{idalib_find_defined, idalib_find_imm, idalib_find_text};
-use crate::ffi::segment::{get_segm_by_name, get_segm_qty, getnseg, getseg};
+use crate::ffi::search::{
+    idalib_bin_search, idalib_find_binary, idalib_find_defined, idalib_find_imm, idalib_find_text,
+    idalib_parse_binpat_str,
+};
+use crate::ffi::segment::{
+    get_segm_by_name, get_segm_qty, getnseg, getseg, idalib_get_fileregion_ea,
+    idalib_get_fileregion_offset,
+};
+use crate::ffi::strings::{idalib_get_max_strlit_length, idalib_get_strlit_contents};
 use crate::ffi::util::{is_align_insn, next_head, prev_head, str2reg};
 use crate::ffi::xref::{xrefblk_t, xrefblk_t_first_from, xrefblk_t_first_to};
 
 use crate::bookmarks::Bookmarks;
 use crate::decompiler::CFunction;
 use crate::func::{Function, FunctionId};
+use crate::import::ImportIterator;
 use crate::insn::{Insn, Register};
 use crate::meta::{Metadata, MetadataMut};
 use crate::name::NameList;
@@ -33,7 +43,7 @@ use crate::plugin::Plugin;
 use crate::processor::Processor;
 use crate::segment::{Segment, SegmentId};
 use crate::strings::StringList;
-use crate::xref::{XRef, XRefQuery};
+use crate::xref::{XRef, XRefFromIterator, XRefQuery, XRefToIterator};
 use crate::{Address, AddressFlags, IDAError, IDARuntimeHandle, prepare_library};
 
 pub struct IDB {
@@ -176,6 +186,10 @@ impl IDB {
         MetadataMut::new()
     }
 
+    pub fn imagebase(&self) -> Address {
+        self.meta().imagebase()
+    }
+
     pub fn processor(&self) -> Processor<'_> {
         let ptr = unsafe { get_ph() };
         Processor::from_ptr(ptr)
@@ -268,6 +282,29 @@ impl IDB {
         unsafe { get_func_qty() }
     }
 
+    fn bounds_to_range(&self, range: impl RangeBounds<Address>) -> (Address, Address) {
+        let start = match range.start_bound() {
+            Bound::Included(&s) => s,
+            Bound::Excluded(&s) => s.saturating_add(1),
+            Bound::Unbounded => 0,
+        };
+        let end = match range.end_bound() {
+            Bound::Included(&e) => e.saturating_add(1),
+            Bound::Excluded(&e) => e,
+            Bound::Unbounded => BADADDR.into(),
+        };
+        (start, end)
+    }
+
+    pub fn heads<'a>(&'a self, range: impl RangeBounds<Address>) -> HeadsIterator<'a> {
+        let (start, end) = self.bounds_to_range(range);
+        HeadsIterator {
+            idb: self,
+            current: Some(start),
+            end,
+        }
+    }
+
     pub fn segment_at(&self, ea: Address) -> Option<Segment<'_>> {
         let ptr = unsafe { getseg(ea.into()) };
 
@@ -307,6 +344,21 @@ impl IDB {
         unsafe { get_segm_qty().0 as _ }
     }
 
+    /// Get file offset corresponding to the given address.
+    ///
+    /// Returns -1 if the address can't be mapped to a file offset.
+    pub fn get_fileregion_offset(&self, ea: Address) -> i64 {
+        unsafe { idalib_get_fileregion_offset(ea.into()) }
+    }
+
+    /// Get linear address corresponding to the given file offset.
+    ///
+    /// Returns BADADDR if the offset can't be mapped to an address.
+    pub fn get_fileregion_ea(&self, offset: i64) -> Address {
+        let result = unsafe { idalib_get_fileregion_ea(offset) };
+        result.into()
+    }
+
     pub fn register_by_name(&self, name: impl AsRef<str>) -> Option<Register> {
         let s = CString::new(name.as_ref()).ok()?;
         let id = unsafe { str2reg(s.as_ptr()).0 };
@@ -340,6 +392,20 @@ impl IDB {
             Some(XRef::from_repr(unsafe { xref.assume_init() }))
         } else {
             None
+        }
+    }
+
+    pub fn xrefs_to<'a>(&'a self, ea: Address) -> impl Iterator<Item = XRef<'a>> + 'a {
+        let first_xref = self.first_xref_to(ea, XRefQuery::ALL);
+        XRefToIterator {
+            current: first_xref,
+        }
+    }
+
+    pub fn xrefs_from<'a>(&'a self, ea: Address) -> impl Iterator<Item = XRef<'a>> + 'a {
+        let first_xref = self.first_xref_from(ea, XRefQuery::ALL);
+        XRefFromIterator {
+            current: first_xref,
         }
     }
 
@@ -510,6 +576,80 @@ impl IDB {
         }
     }
 
+    pub fn find_bytes(&self, pattern: impl AsRef<str>) -> Option<Address> {
+        self.find_bytes_range(.., pattern)
+    }
+
+    pub fn find_bytes_range(
+        &self,
+        range: impl RangeBounds<Address>,
+        pattern: impl AsRef<str>,
+    ) -> Option<Address> {
+        let (start_ea, end_ea) = self.bounds_to_range(range);
+        let s = CString::new(pattern.as_ref()).ok()?;
+        let addr =
+            unsafe { idalib_bin_search(start_ea.into(), end_ea.into(), s.as_ptr(), 0.into()) };
+        if addr == BADADDR {
+            None
+        } else {
+            Some(addr.into())
+        }
+    }
+
+    pub fn find_bytes_iter<'a>(
+        &'a self,
+        pattern: impl AsRef<str> + 'a,
+    ) -> impl Iterator<Item = Address> + 'a {
+        let mut cur = 0u64;
+        std::iter::from_fn(move || {
+            cur = self.find_bytes_range(cur.., pattern.as_ref())?;
+            let found = cur;
+            cur = self.find_defined(cur).unwrap_or(BADADDR.into());
+            Some(found)
+        })
+    }
+
+    pub fn parse_binary_pattern(&self, pattern: impl AsRef<str>) -> Option<(Vec<u8>, Vec<u8>)> {
+        let s = CString::new(pattern.as_ref()).ok()?;
+        let mut bytes = Vec::new();
+        let mut mask = Vec::new();
+
+        let success = unsafe { idalib_parse_binpat_str(s.as_ptr(), &mut bytes, &mut mask) };
+        if success { Some((bytes, mask)) } else { None }
+    }
+
+    pub fn find_binary(&self, bytes: &[u8], mask: &[u8]) -> Option<Address> {
+        self.find_binary_range(.., bytes, mask)
+    }
+
+    pub fn find_binary_range(
+        &self,
+        range: impl RangeBounds<Address>,
+        bytes: &[u8],
+        mask: &[u8],
+    ) -> Option<Address> {
+        let (start_ea, end_ea) = self.bounds_to_range(range);
+        if bytes.len() != mask.len() {
+            return None;
+        }
+
+        let addr = unsafe {
+            idalib_find_binary(
+                start_ea.into(),
+                end_ea.into(),
+                bytes.as_ptr(),
+                mask.as_ptr(),
+                bytes.len(),
+            )
+        };
+
+        if addr == BADADDR {
+            None
+        } else {
+            Some(addr.into())
+        }
+    }
+
     pub fn strings(&self) -> StringList<'_> {
         StringList::new(self)
     }
@@ -526,6 +666,14 @@ impl IDB {
 
     pub fn flags_at(&self, ea: Address) -> AddressFlags<'_> {
         AddressFlags::new(unsafe { get_flags(ea.into()) })
+    }
+
+    pub fn is_code(&self, ea: Address) -> bool {
+        self.flags_at(ea).is_code()
+    }
+
+    pub fn is_data(&self, ea: Address) -> bool {
+        self.flags_at(ea).is_data()
     }
 
     pub fn get_byte(&self, ea: Address) -> u8 {
@@ -558,6 +706,33 @@ impl IDB {
         buf
     }
 
+    pub fn get_string_at(&self, ea: Address) -> Option<String> {
+        let max_len = unsafe { idalib_get_max_strlit_length(ea.into(), -1) };
+        if max_len == 0 {
+            return None;
+        }
+
+        let contents = unsafe { idalib_get_strlit_contents(ea.into(), max_len, -1) };
+        if contents.is_empty() {
+            None
+        } else {
+            Some(contents)
+        }
+    }
+
+    pub fn get_name(&self, ea: Address) -> Option<String> {
+        let name = unsafe { idalib_get_ea_name(ea.into()) };
+        if name.is_empty() { None } else { Some(name) }
+    }
+
+    pub fn is_loaded(&self, ea: Address) -> bool {
+        unsafe { idalib_is_loaded(ea.into()) }
+    }
+
+    pub fn is_mapped(&self, ea: Address) -> bool {
+        unsafe { idalib_is_mapped(ea.into()) }
+    }
+
     pub fn find_plugin(
         &self,
         name: impl AsRef<str>,
@@ -579,6 +754,10 @@ impl IDB {
     pub fn load_plugin(&self, name: impl AsRef<str>) -> Result<Plugin<'_>, IDAError> {
         self.find_plugin(name, true)
     }
+
+    pub fn imports(&self) -> ImportIterator<'_> {
+        ImportIterator::new()
+    }
 }
 
 impl Drop for IDB {
@@ -589,6 +768,30 @@ impl Drop for IDB {
             }
         }
         close_database_with(self.save);
+    }
+}
+
+pub struct HeadsIterator<'a> {
+    idb: &'a IDB,
+    current: Option<Address>,
+    end: Address,
+}
+
+impl<'a> Iterator for HeadsIterator<'a> {
+    type Item = Address;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let current = self.current?;
+
+        if current >= self.end {
+            self.current = None;
+            return None;
+        }
+
+        let next_addr = self.idb.next_head_with(current, self.end);
+        self.current = next_addr;
+
+        Some(current)
     }
 }
 

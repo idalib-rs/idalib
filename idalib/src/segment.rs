@@ -329,4 +329,28 @@ impl<'a> Segment<'a> {
     pub fn is_visible(&self) -> bool {
         unsafe { (*self.ptr).is_visible_segm() }
     }
+
+    pub fn is_extern(&self) -> bool {
+        self.r#type().is_extern()
+    }
+
+    pub fn is_code_segment(&self) -> bool {
+        self.r#type().is_code()
+    }
+
+    pub fn is_data_segment(&self) -> bool {
+        self.r#type().is_data()
+    }
+
+    pub fn is_import_segment(&self) -> bool {
+        self.r#type().is_import()
+    }
+
+    pub fn is_bss_segment(&self) -> bool {
+        self.r#type().is_bss()
+    }
+
+    pub fn is_normal_segment(&self) -> bool {
+        self.r#type().is_normal()
+    }
 }

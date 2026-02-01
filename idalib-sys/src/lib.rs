@@ -109,6 +109,25 @@ include_cpp! {
     generate!("is_indirect_jump_insn")
 
     generate!("is_ret_insn")
+
+    // instruction feature flags (CF_*)
+    generate!("CF_STOP")
+    generate!("CF_CHG1")
+    generate!("CF_CHG2")
+    generate!("CF_CHG3")
+    generate!("CF_CHG4")
+    generate!("CF_CHG5")
+    generate!("CF_CHG6")
+    generate!("CF_USE1")
+    generate!("CF_USE2")
+    generate!("CF_USE3")
+    generate!("CF_USE4")
+    generate!("CF_USE5")
+    generate!("CF_USE6")
+    generate!("CF_JUMP")
+    generate!("CF_SHFT")
+    generate!("CF_HLL")
+
     generate!("IRI_EXTENDED")
     generate!("IRI_RET_LITERALLY")
     generate!("IRI_SKIP_RETTARGET")
@@ -281,6 +300,7 @@ include_cpp! {
 
     // ua (we use insn_t, op_t, etc. from pod)
     generate!("decode_insn")
+    generate!("print_insn_mnem")
 
     extern_cpp_type!("insn_t", crate::pod::insn_t)
     extern_cpp_type!("op_t", crate::pod::op_t)
@@ -686,7 +706,7 @@ pub mod inf {
         idalib_inf_strlit_names, idalib_inf_strlit_savecase, idalib_inf_strlit_serial_names,
         idalib_inf_test_mode, idalib_inf_trace_flow, idalib_inf_truncate_on_del,
         idalib_inf_unicode_strlits, idalib_inf_use_allasm, idalib_inf_use_flirt,
-        idalib_inf_use_gcc_layout,
+        idalib_inf_use_gcc_layout, idalib_inf_get_imagebase,
     };
 }
 
@@ -734,9 +754,11 @@ mod ffix {
         include!("loader_extras.h");
         include!("nalt_extras.h");
         include!("ph_extras.h");
+        include!("name_extras.h");
         include!("segm_extras.h");
         include!("search_extras.h");
         include!("strings_extras.h");
+        include!("insn_extras.h");
 
         type c_short = autocxx::c_short;
         type c_int = autocxx::c_int;
@@ -756,6 +778,8 @@ mod ffix {
         type qflow_chart_t = super::ffi::qflow_chart_t;
         type qbasic_block_t = super::ffi::qbasic_block_t;
         type segment_t = super::ffi::segment_t;
+        type insn_t = super::pod::insn_t;
+        type op_t = super::pod::op_t;
 
         // cfuncptr_t
         type qrefcnt_t_cfunc_t_AutocxxConcrete = super::ffi::qrefcnt_t_cfunc_t_AutocxxConcrete;
@@ -780,6 +804,7 @@ mod ffix {
         // NOTE: we can't use uval_t here due to it resolving to c_ulonglong,
         // which causes `verify_extern_type` to fail...
         unsafe fn idalib_entry_name(e: c_ulonglong) -> Result<String>;
+        unsafe fn idalib_entry_forwarder(ord: c_ulonglong) -> Result<String>;
 
         unsafe fn idalib_func_flags(f: *const func_t) -> u64;
         unsafe fn idalib_func_name(f: *const func_t) -> Result<String>;
@@ -981,11 +1006,37 @@ mod ffix {
         unsafe fn idalib_inf_get_strlit_pref() -> String;
         unsafe fn idalib_inf_get_cc(out: *mut compiler_info_t) -> bool;
         unsafe fn idalib_inf_get_privrange(out: *mut range_t) -> bool;
+        unsafe fn idalib_inf_get_imagebase() -> c_ulonglong;
 
         unsafe fn idalib_ph_id(ph: *const processor_t) -> i32;
         unsafe fn idalib_ph_short_name(ph: *const processor_t) -> String;
         unsafe fn idalib_ph_long_name(ph: *const processor_t) -> String;
         unsafe fn idalib_is_thumb_at(ph: *const processor_t, ea: c_ulonglong) -> bool;
+
+        unsafe fn idalib_get_insn_mnem(ea: c_ulonglong) -> String;
+        unsafe fn idalib_get_disasm_line(ea: c_ulonglong) -> String;
+        unsafe fn idalib_get_insn_operand(ea: c_ulonglong, n: c_int) -> String;
+        unsafe fn idalib_tag_remove(input: &str) -> String;
+
+        // SIB (Scale-Index-Base) decoding functions for x86 operands
+        unsafe fn idalib_sib_base(insn: *const insn_t, op: *const op_t) -> c_int;
+        unsafe fn idalib_sib_index(insn: *const insn_t, op: *const op_t) -> c_int;
+        unsafe fn idalib_sib_scale(op: *const op_t) -> c_int;
+
+        // High-level x86 operand helpers
+        unsafe fn idalib_x86_base_reg(insn: *const insn_t, op: *const op_t) -> c_int;
+        unsafe fn idalib_x86_index_reg(insn: *const insn_t, op: *const op_t) -> c_int;
+        unsafe fn idalib_x86_scale(op: *const op_t) -> c_int;
+        unsafe fn idalib_has_displ(op: *const op_t) -> bool;
+
+        // SIB byte accessors
+        unsafe fn idalib_has_sib(op: *const op_t) -> bool;
+        unsafe fn idalib_get_sib_byte(op: *const op_t) -> u8;
+
+        // Instruction feature functions
+        unsafe fn idalib_get_canon_feature(itype: u16) -> u32;
+        unsafe fn idalib_has_cf_chg(feature: u32, opnum: u32) -> bool;
+        unsafe fn idalib_has_cf_use(feature: u32, opnum: u32) -> bool;
 
         unsafe fn idalib_qflow_graph_getn_block(
             f: *const qflow_chart_t,
@@ -1001,6 +1052,8 @@ mod ffix {
         unsafe fn idalib_segm_perm(s: *const segment_t) -> u8;
         unsafe fn idalib_segm_bitness(s: *const segment_t) -> u8;
         unsafe fn idalib_segm_type(s: *const segment_t) -> u8;
+        unsafe fn idalib_get_fileregion_offset(ea: c_ulonglong) -> i64;
+        unsafe fn idalib_get_fileregion_ea(offset: i64) -> c_ulonglong;
 
         unsafe fn idalib_get_cmt(ea: c_ulonglong, rptble: bool) -> String;
 
@@ -1018,9 +1071,15 @@ mod ffix {
         unsafe fn idalib_find_text(ea: c_ulonglong, text: *const c_char) -> c_ulonglong;
         unsafe fn idalib_find_imm(ea: c_ulonglong, imm: c_uint) -> c_ulonglong;
         unsafe fn idalib_find_defined(ea: c_ulonglong) -> c_ulonglong;
+        
+        unsafe fn idalib_bin_search(start_ea: c_ulonglong, end_ea: c_ulonglong, pattern: *const c_char, flags: c_int) -> c_ulonglong;
+        unsafe fn idalib_parse_binpat_str(pattern: *const c_char, out_bytes: &mut Vec<u8>, out_mask: &mut Vec<u8>) -> bool;
+        unsafe fn idalib_find_binary(start_ea: c_ulonglong, end_ea: c_ulonglong, bytes: *const u8, mask: *const u8, len: usize) -> c_ulonglong;
 
         unsafe fn idalib_get_strlist_item_addr(index: usize) -> c_ulonglong;
         unsafe fn idalib_get_strlist_item_length(index: usize) -> usize;
+        unsafe fn idalib_get_strlit_contents(ea: c_ulonglong, len: usize, strtype: i32) -> String;
+        unsafe fn idalib_get_max_strlit_length(ea: c_ulonglong, strtype: i32) -> usize;
 
         unsafe fn idalib_ea2str(ea: c_ulonglong) -> String;
 
@@ -1029,8 +1088,19 @@ mod ffix {
         unsafe fn idalib_get_dword(ea: c_ulonglong) -> u32;
         unsafe fn idalib_get_qword(ea: c_ulonglong) -> u64;
         unsafe fn idalib_get_bytes(ea: c_ulonglong, buf: &mut Vec<u8>) -> Result<usize>;
+        unsafe fn idalib_is_loaded(ea: c_ulonglong) -> bool;
+        unsafe fn idalib_is_mapped(ea: c_ulonglong) -> bool;
+        unsafe fn idalib_is_stkvar(flags: c_ulonglong, operand_index: i32) -> bool;
+        unsafe fn idalib_is_off(flags: c_ulonglong, operand_index: i32) -> bool;
 
         unsafe fn idalib_get_input_file_path() -> String;
+
+        unsafe fn idalib_get_imports(
+            module_name: &mut Vec<String>,
+            import_names: &mut Vec<String>,
+            addresses: &mut Vec<u64>,
+            ordinals: &mut Vec<u32>,
+        ) -> bool;
 
         unsafe fn idalib_plugin_version(p: *const plugin_t) -> u64;
         unsafe fn idalib_plugin_flags(p: *const plugin_t) -> u64;
@@ -1040,6 +1110,7 @@ mod ffix {
             minor: *mut c_int,
             build: *mut c_int,
         ) -> bool;
+        unsafe fn idalib_get_ea_name(ea: c_ulonglong) -> String;
     }
 }
 
@@ -1058,7 +1129,7 @@ pub const fn from_ea(v: ea_t) -> u64 {
 
 pub mod entry {
     pub use super::ffi::{get_entry, get_entry_ordinal, get_entry_qty, uval_t};
-    pub use super::ffix::idalib_entry_name;
+    pub use super::ffix::{idalib_entry_forwarder, idalib_entry_name};
 }
 
 pub mod insn {
@@ -1160,8 +1231,9 @@ pub mod segment {
     };
 
     pub use super::ffix::{
-        idalib_segm_align, idalib_segm_bitness, idalib_segm_bytes, idalib_segm_name,
-        idalib_segm_perm, idalib_segm_type,
+        idalib_get_fileregion_ea, idalib_get_fileregion_offset, idalib_segm_align,
+        idalib_segm_bitness, idalib_segm_bytes, idalib_segm_name, idalib_segm_perm,
+        idalib_segm_type,
     };
 }
 
@@ -1169,13 +1241,17 @@ pub mod bytes {
     pub use super::ffi::{flags64_t, get_flags, is_code, is_data};
     pub use super::ffix::{
         idalib_get_byte, idalib_get_bytes, idalib_get_dword, idalib_get_qword, idalib_get_word,
+        idalib_is_loaded, idalib_is_mapped, idalib_is_off, idalib_is_stkvar,
     };
 }
 
 pub mod util {
     pub use super::ffi::{
         is_align_insn, is_basic_block_end, is_call_insn, is_indirect_jump_insn, is_ret_insn,
-        next_head, prev_head, str2reg,
+        next_head, prev_head, print_insn_mnem, str2reg,
+    };
+    pub use super::ffix::{
+        idalib_get_disasm_line, idalib_get_insn_mnem, idalib_get_insn_operand, idalib_tag_remove,
     };
 }
 
@@ -1204,12 +1280,18 @@ pub mod bookmarks {
 }
 
 pub mod search {
-    pub use super::ffix::{idalib_find_defined, idalib_find_imm, idalib_find_text};
+    pub use super::ffix::{
+        idalib_find_defined, idalib_find_imm, idalib_find_text,
+        idalib_bin_search, idalib_parse_binpat_str, idalib_find_binary,
+    };
 }
 
 pub mod strings {
     pub use super::ffi::{build_strlist, clear_strlist, get_strlist_qty};
-    pub use super::ffix::{idalib_get_strlist_item_addr, idalib_get_strlist_item_length};
+    pub use super::ffix::{
+        idalib_get_max_strlit_length, idalib_get_strlist_item_addr, idalib_get_strlist_item_length,
+        idalib_get_strlit_contents,
+    };
 }
 
 pub mod loader {
@@ -1228,7 +1310,7 @@ pub mod nalt {
     pub use super::ffi::{
         retrieve_input_file_md5, retrieve_input_file_sha256, retrieve_input_file_size,
     };
-    pub use super::ffix::idalib_get_input_file_path;
+    pub use super::ffix::{idalib_get_imports, idalib_get_input_file_path};
 }
 
 pub mod name {
@@ -1236,6 +1318,23 @@ pub mod name {
         get_nlist_ea, get_nlist_idx, get_nlist_name, get_nlist_size, is_in_nlist, is_public_name,
         is_weak_name,
     };
+    pub use super::ffix::idalib_get_ea_name;
+}
+
+pub mod x86 {
+    pub use super::ffix::{
+        idalib_sib_base, idalib_sib_index, idalib_sib_scale, idalib_x86_base_reg,
+        idalib_x86_index_reg, idalib_x86_scale, idalib_has_displ, idalib_has_sib, idalib_get_sib_byte,
+    };
+}
+
+pub mod insn_features {
+    pub use super::ffi::{
+        CF_STOP, CF_CHG1, CF_CHG2, CF_CHG3, CF_CHG4, CF_CHG5, CF_CHG6,
+        CF_USE1, CF_USE2, CF_USE3, CF_USE4, CF_USE5, CF_USE6,
+        CF_JUMP, CF_SHFT, CF_HLL,
+    };
+    pub use super::ffix::{idalib_get_canon_feature, idalib_has_cf_chg, idalib_has_cf_use};
 }
 
 pub mod ida {
