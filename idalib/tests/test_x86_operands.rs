@@ -1,6 +1,7 @@
 use tempdir::TempDir;
 
 use idalib::idb::IDB;
+use idalib::insn::AddressingMode;
 #[path = "../src/tests.rs"]
 mod tests;
 
@@ -28,11 +29,13 @@ fn test_operand_has_sib() {
     let insn_with_sib = idb.insn_at(0x10001002).unwrap();
     let op_with_sib = insn_with_sib.operand(1).unwrap();
     assert!(op_with_sib.has_sib(), "Operand should have SIB byte");
+    assert_eq!(op_with_sib.addressing_mode(), AddressingMode::Sib);
 
     // mov eax, ecx - no SIB
     let insn_no_sib = idb.insn_at(0x10001000).unwrap();
     let op_no_sib = insn_no_sib.operand(1).unwrap();
     assert!(!op_no_sib.has_sib(), "Operand should not have SIB byte");
+    assert_eq!(op_no_sib.addressing_mode(), AddressingMode::Base);
 }
 
 fn test_operand_sib_byte() {

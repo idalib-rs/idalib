@@ -368,13 +368,15 @@ impl Operand {
         }
     }
 
-    /// Get specflag1 for phrase/displ operands (used for x86 addressing mode detection).
-    /// Returns the raw specflag1 value which indicates addressing mode:
-    /// - 0: standard [base+offset] or [base] addressing
-    /// - 1: SIB byte present, use specflag2 for base
-    /// - other: unknown/unsupported addressing mode
-    pub fn specflag1(&self) -> i8 {
-        self.inner.specflag1
+    /// Get addressing mode for phrase/displ operands (used for x86).
+    /// Returns:
+    /// - Base: standard [base+offset] or [base] addressing
+    /// - Sib: SIB byte present, use specflag2 for base
+    pub fn addressing_mode(&self) -> AddressingMode {
+        match self.inner.specflag1 {
+            1 => AddressingMode::Sib,
+            _ => AddressingMode::Base,
+        }
     }
 
     /// Get specflag2 for phrase/displ operands (used for x86 SIB byte base extraction).
