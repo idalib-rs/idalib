@@ -48,7 +48,7 @@ rust::String idalib_get_disasm_line(ea_t ea) {
   return rust::String();
 }
 
-rust::String idalib_print_operand(ea_t ea, int n) {
+rust::String idalib_get_insn_operand(ea_t ea, int n) {
   qstring buf;
   if (print_operand(&buf, ea, n)) {
     return rust::String(buf.c_str());

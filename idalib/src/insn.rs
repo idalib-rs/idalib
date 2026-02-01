@@ -5,7 +5,7 @@ use bitflags::bitflags;
 use crate::ffi::insn::insn_t;
 use crate::ffi::insn::op::*;
 use crate::ffi::insn::op::op_t;
-use crate::ffi::util::{is_basic_block_end, is_call_insn, is_indirect_jump_insn, is_ret_insn, idalib_get_disasm_line, idalib_get_insn_mnem, idalib_print_operand};
+use crate::ffi::util::{is_basic_block_end, is_call_insn, is_indirect_jump_insn, is_ret_insn, idalib_get_disasm_line, idalib_get_insn_mnem, idalib_get_insn_operand};
 
 pub use crate::ffi::insn::{arm, mips, x86};
 
@@ -160,7 +160,7 @@ impl Insn {
 
     pub fn print_operand(&self, n: usize) -> Option<String> {
         self.operand(n).map(|_| unsafe {
-            idalib_print_operand(autocxx::c_ulonglong(self.inner.ea), autocxx::c_int(n as i32))
+            idalib_get_insn_operand(autocxx::c_ulonglong(self.inner.ea), autocxx::c_int(n as i32))
         })
     }
 

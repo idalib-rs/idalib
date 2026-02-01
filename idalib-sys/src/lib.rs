@@ -1067,7 +1067,7 @@ mod ffix {
 
         unsafe fn idalib_get_insn_mnem(ea: c_ulonglong) -> String;
         unsafe fn idalib_get_disasm_line(ea: c_ulonglong) -> String;
-        unsafe fn idalib_print_operand(ea: c_ulonglong, n: c_int) -> String;
+        unsafe fn idalib_get_insn_operand(ea: c_ulonglong, n: c_int) -> String;
         unsafe fn idalib_tag_remove(input: &str) -> String;
 
         // SIB (Scale-Index-Base) decoding functions for x86 operands
@@ -1314,7 +1314,7 @@ pub mod util {
         next_head, prev_head, print_insn_mnem, str2reg,
     };
     pub use super::ffix::{
-        idalib_get_disasm_line, idalib_get_insn_mnem, idalib_print_operand, idalib_tag_remove,
+        idalib_get_disasm_line, idalib_get_insn_mnem, idalib_get_insn_operand, idalib_tag_remove,
     };
 }
 
