@@ -22,7 +22,7 @@ rust::String idalib_get_strlit_contents(ea_t ea, size_t len, int32_t strtype) {
   if (get_strlit_contents(&result, ea, len, strtype)) {
     return rust::String(result.c_str());
   } else {
-    return rust::String("");
+    return rust::String();
   }
 }
 

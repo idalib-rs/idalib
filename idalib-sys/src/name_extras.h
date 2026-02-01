@@ -9,6 +9,6 @@ rust::String idalib_get_ea_name(ea_t ea) {
   if (get_ea_name(&name, ea)) {
     return rust::String(name.c_str());
   } else {
-    return rust::String("");
+    return rust::String();
   }
 }
