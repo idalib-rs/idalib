@@ -1,7 +1,8 @@
 use tempdir::TempDir;
 
 use idalib::idb::IDB;
-use idalib::tests;
+#[path = "../src/tests.rs"]
+mod tests;
 
 // .text:10001000                         sub_10001000 proc near
 // .text:10001000                         arg_0= dword ptr  4
