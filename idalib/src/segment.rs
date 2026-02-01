@@ -354,18 +354,3 @@ impl<'a> Segment<'a> {
         self.r#type().is_normal()
     }
 }
-
-/// Get file offset corresponding to the given address.
-///
-/// Returns -1 if the address can't be mapped to a file offset.
-pub fn get_fileregion_offset(ea: Address) -> i64 {
-    unsafe { crate::ffi::segment::idalib_get_fileregion_offset(crate::ffi::into_ea(ea)) }
-}
-
-/// Get linear address corresponding to the given file offset.
-///
-/// Returns BADADDR if the offset can't be mapped to an address.
-pub fn get_fileregion_ea(offset: i64) -> Address {
-    let result = unsafe { crate::ffi::segment::idalib_get_fileregion_ea(offset) };
-    crate::ffi::from_ea(result)
-}

@@ -27,7 +27,10 @@ use crate::ffi::search::{
     idalib_bin_search, idalib_find_binary, idalib_find_defined, idalib_find_imm, idalib_find_text,
     idalib_parse_binpat_str,
 };
-use crate::ffi::segment::{get_segm_by_name, get_segm_qty, getnseg, getseg};
+use crate::ffi::segment::{
+    get_segm_by_name, get_segm_qty, getnseg, getseg, idalib_get_fileregion_ea,
+    idalib_get_fileregion_offset,
+};
 use crate::ffi::typeinf::{idalib_format_cfunc_decls, idalib_format_decls};
 use crate::ffi::strings::{idalib_get_max_strlit_length, idalib_get_strlit_contents};
 use crate::ffi::util::{is_align_insn, next_head, prev_head, str2reg};
@@ -393,6 +396,21 @@ impl IDB {
 
     pub fn segment_count(&self) -> usize {
         unsafe { get_segm_qty().0 as _ }
+    }
+
+    /// Get file offset corresponding to the given address.
+    ///
+    /// Returns -1 if the address can't be mapped to a file offset.
+    pub fn get_fileregion_offset(&self, ea: Address) -> i64 {
+        unsafe { idalib_get_fileregion_offset(ea.into()) }
+    }
+
+    /// Get linear address corresponding to the given file offset.
+    ///
+    /// Returns BADADDR if the offset can't be mapped to an address.
+    pub fn get_fileregion_ea(&self, offset: i64) -> Address {
+        let result = unsafe { idalib_get_fileregion_ea(offset) };
+        result.into()
     }
 
     pub fn register_by_name(&self, name: impl AsRef<str>) -> Option<Register> {
