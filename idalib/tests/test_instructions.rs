@@ -63,7 +63,7 @@ fn test_disasm_line() {
         assert!(idb.is_code(addr));
 
         let insn = idb.insn_at(addr).unwrap();
-        let disasm = insn.disasm_line();
+        let disasm = insn.to_string();
 
         assert_eq!(expected_disasm, disasm);
     }
@@ -92,8 +92,9 @@ fn test_print_operand() {
         let insn = idb.insn_at(addr).unwrap();
 
         for (i, &expected_operand) in expected_operands.iter().enumerate() {
-            let operand = insn.print_operand(i).expect("operand should exist");
-            let operand_clean = idalib::tag_remove(&operand);
+            let operand = insn.operand(i).expect("operand should exist");
+            let operand_str = operand.to_string();
+            let operand_clean = idalib::tag_remove(&operand_str);
             assert_eq!(expected_operand, operand_clean);
         }
     }
