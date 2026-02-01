@@ -129,17 +129,16 @@ pub enum OSType {
     UNIX = 3,
 }
 
-impl OSType {
-    /// Attempt to convert a u16 to an OSType enum value.
-    ///
-    /// Returns Some if the value corresponds to a known OS type, None otherwise.
-    pub fn from_u16(value: u16) -> Option<Self> {
+impl TryFrom<u16> for OSType {
+    type Error = u16;
+
+    fn try_from(value: u16) -> Result<Self, Self::Error> {
         match value {
-            0 => Some(OSType::LINUX),
-            1 => Some(OSType::WIN32),
-            2 => Some(OSType::MAC),
-            3 => Some(OSType::UNIX),
-            _ => None,
+            0 => Ok(OSType::LINUX),
+            1 => Ok(OSType::WIN32),
+            2 => Ok(OSType::MAC),
+            3 => Ok(OSType::UNIX),
+            _ => Err(value),
         }
     }
 }
@@ -269,7 +268,7 @@ impl<'a> Metadata<'a> {
 
     pub fn ostype(&self) -> Option<OSType> {
         let value = unsafe { idalib_inf_get_ostype() };
-        OSType::from_u16(value)
+        OSType::try_from(value).ok()
     }
 
     pub fn apptype(&self) -> u16 {
