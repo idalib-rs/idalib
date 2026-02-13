@@ -100,8 +100,8 @@ cargo run --example=dump_ls
 Windows:
 
 ```powershell
-$env:PATH="C:\Program Files\IDA Professional 9.2;$env:PATH"
-$env:IDADIR="C:\Program Files\IDA Professional 9.2"
+$env:PATH="C:\Program Files\IDA Professional 9.3;$env:PATH"
+$env:IDADIR="C:\Program Files\IDA Professional 9.3"
 
 cargo run --example=dump_ls
 ```
