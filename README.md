@@ -178,6 +178,14 @@ development, otherwise the build will fail, e.g.:
 git submodule update --init --recursive
 ```
 
+## Contributing (and AI-assisted development)
+
+For development with or without AI assistance via tools, such as Claude Code,
+OpenCode, or Codex, consult the `skills` directory, which contains
+[guidelines](https://github.com/idalib-rs/idalib/blob/master/skills/idalib-rust-style/SKILL.md)
+to keep contributed code consistent with the project's coding style and best
+practices.
+
 ## Contributors
 
 Please see [CONTRIBUTORS.md](https://github.com/idalib-rs/idalib/blob/master/CONTRIBUTORS.md) for a full list of
