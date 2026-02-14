@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.3 (2026-02-14)
+
+Compatibility release for IDA 9.3.
+
 ## 0.7.2 (2025-09-16)
 
 Bugfix:
