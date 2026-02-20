@@ -26,6 +26,29 @@ bitflags! {
     }
 }
 
+bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub struct SetNameFlags: i32 {
+        const SN_CHECK        = 0x00;
+        const SN_NOCHECK      = 0x01;
+        const SN_PUBLIC       = 0x02;
+        const SN_NON_PUBLIC   = 0x04;
+        const SN_WEAK         = 0x08;
+        const SN_NON_WEAK     = 0x10;
+        const SN_AUTO         = 0x20;
+        const SN_NON_AUTO     = 0x40;
+        const SN_NOLIST       = 0x80;
+        const SN_NOWARN       = 0x100;
+        const SN_LOCAL        = 0x200;
+        const SN_IDBENC       = 0x400;
+        const SN_FORCE        = 0x800;
+        const SN_NODUMMY      = 0x1000;
+        const SN_DELTAIL      = 0x2000;
+        const SN_MULTI        = 0x4000;
+        const SN_MULTI_FORCE  = 0x8000;
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Name {
     address: Address,
@@ -66,7 +89,9 @@ impl<'a> NameList<'a> {
             return None;
         }
 
-        let name = unsafe { CStr::from_ptr(name) }.to_string_lossy().into_owned();
+        let name = unsafe { CStr::from_ptr(name) }
+            .to_string_lossy()
+            .into_owned();
 
         let mut properties = NameProperties::empty();
 

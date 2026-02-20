@@ -384,6 +384,8 @@ include_cpp! {
     generate!("is_in_nlist")
     generate!("is_public_name")
     generate!("is_weak_name")
+    generate!("set_name")
+
 }
 
 pub mod hexrays {
@@ -1234,7 +1236,7 @@ pub mod nalt {
 pub mod name {
     pub use super::ffi::{
         get_nlist_ea, get_nlist_idx, get_nlist_name, get_nlist_size, is_in_nlist, is_public_name,
-        is_weak_name,
+        is_weak_name, set_name,
     };
 }
 
