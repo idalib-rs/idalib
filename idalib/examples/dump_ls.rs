@@ -22,7 +22,8 @@ fn main() -> anyhow::Result<()> {
 
     println!("segments: {}", idb.segment_count());
 
-    for (sid, s) in idb.segments() {
+    for s in idb.segments() {
+        let sid = s.id();
         let addr = s.start_address();
         let size = s.len();
 
@@ -43,7 +44,8 @@ fn main() -> anyhow::Result<()> {
 
     println!("functions: {}", idb.function_count());
 
-    for (fid, f) in idb.functions() {
+    for f in idb.functions() {
+        let fid = f.id();
         if f.flags().contains(FunctionFlags::TAIL) {
             continue;
         }
