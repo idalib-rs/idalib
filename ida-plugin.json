@@ -8,7 +8,7 @@
     "idaVersions": ["9.0", "9.1", "9.2", "9.3"],
     "description" : "Idiomatic Rust bindings to IDA SDK",
     "license": "MIT OR Apache-2.0",
-    "version": "0.7.3",
+    "version": "0.8.0",
     "urls": {
       "repository": "https://github.com/idalib-rs/idalib",
       "documentation": "https://idalib.rs"
