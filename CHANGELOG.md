@@ -1,8 +1,9 @@
 # Changelog
 
-## 0.7.3 (2026-02-14)
+## 0.8.0 (2026-02-20)
 
-Compatibility release for IDA 9.3.
+- Compatibility release for IDA 9.3 (contributor:
+  [@yeggor](https://github.com/yeggor)).
 
 ## 0.7.2 (2025-09-16)
 
