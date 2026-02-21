@@ -143,6 +143,7 @@ fn main() {
     }
 
     let hexrays = autocxx_bindgen::builder()
+        .header(ffi_path.join("fixups.h").to_str().expect("path is valid string"))
         .header(ida.join("pro.h").to_str().expect("path is valid string"))
         .header(
             ida.join("hexrays.hpp")

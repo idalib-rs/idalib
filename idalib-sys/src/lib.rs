@@ -54,6 +54,8 @@ impl IDAError {
 }
 
 include_cpp! {
+    // NOTE: this fixes compilation issues on Windows when cross-compiling
+    #include "fixups.h"
     // NOTE: this fixes autocxx's inability to detect ea_t, optype_t as POD...
     #include "types.h"
 
