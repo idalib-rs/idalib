@@ -5,10 +5,10 @@ of standalone analysis tools using IDA v9.x’s idalib.</p>
 <p>To use idalib, add it as a dependency in your <code>Cargo.toml</code> and include a <code>build.rs</code> file in
 your project to properly link against IDA:</p>
 <div class="example-wrap"><pre class="language-toml"><code>[dependencies]
-idalib = &quot;0.7&quot;
+idalib = &quot;0.8&quot;
 
 [build-dependencies]
-idalib-build = &quot;0.7&quot;</code></pre></div>
+idalib-build = &quot;0.8&quot;</code></pre></div>
 <p>Here is a basic example of a <code>build.rs</code> file:</p>
 
 <div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>main() -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>std::error::Error&gt;&gt; {
