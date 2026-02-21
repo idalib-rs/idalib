@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.1 (2026-02-21)
+
+Bugfix:
+- Fix build issues on Windows caused by SDK.
+
 ## 0.8.0 (2026-02-20)
 
 - Compatibility release for IDA 9.3 (contributor:
