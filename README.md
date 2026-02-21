@@ -192,6 +192,13 @@ practices.
 Please see [CONTRIBUTORS.md](https://github.com/idalib-rs/idalib/blob/master/CONTRIBUTORS.md) for a full list of
 acknowledgments.
 
+## Support
+
+If you have any questions, issues, or suggestions related to IDALIB Rust
+bindings, join our [Slack
+workspace](https://join.slack.com/t/idalib-rs/shared_invite/zt-3qhdxe9af-wM4a0XbTDD85DpW9nPCNUQ)
+or open an issue.
+
 ## Acknowledgments
 
 This project's development has been supported by the following organisations:
