@@ -17,6 +17,7 @@ use crate::ffi::ida::{
 };
 use crate::ffi::insn::decode;
 use crate::ffi::loader::find_plugin;
+use crate::ffi::name::set_name;
 use crate::ffi::processor::get_ph;
 use crate::ffi::search::{idalib_find_defined, idalib_find_imm, idalib_find_text};
 use crate::ffi::segment::{get_segm_by_name, get_segm_qty, getnseg, getseg};
@@ -28,7 +29,7 @@ use crate::decompiler::CFunction;
 use crate::func::{Function, FunctionId};
 use crate::insn::{Insn, Register};
 use crate::meta::{Metadata, MetadataMut};
-use crate::name::NameList;
+use crate::name::{NameList, SetNameFlags};
 use crate::plugin::Plugin;
 use crate::processor::Processor;
 use crate::segment::{Segment, SegmentId};
@@ -341,6 +342,23 @@ impl IDB {
         } else {
             None
         }
+    }
+
+    pub fn set_name(
+        &self,
+        ea: Address,
+        name: impl AsRef<str>,
+        flags: SetNameFlags,
+    ) -> Result<(), IDAError> {
+        let c_name = CString::new(name.as_ref()).map_err(IDAError::ffi)?;
+
+        if unsafe { set_name(ea.into(), c_name.as_ptr(), flags.bits().into()) } {
+            return Ok(());
+        }
+
+        Err(IDAError::ffi_with(format!(
+            "failed to set name with {flags:?} at {ea:#x}"
+        )))
     }
 
     pub fn get_cmt(&self, ea: Address) -> Option<String> {
