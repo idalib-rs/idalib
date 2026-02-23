@@ -9,7 +9,7 @@ use crate::ffi::comments::{append_cmt, idalib_get_cmt, set_cmt};
 use crate::ffi::conversions::idalib_ea2str;
 use crate::ffi::entry::{get_entry, get_entry_ordinal, get_entry_qty};
 use crate::ffi::func::{
-    get_func, get_func_qty, getn_func, idalib_get_func_cmt, idalib_set_func_cmt,
+    get_func, get_func_num, get_func_qty, getn_func, idalib_get_func_cmt, idalib_set_func_cmt,
 };
 use crate::ffi::hexrays::{decompile_func, init_hexrays_plugin, term_hexrays_plugin};
 use crate::ffi::ida::{
@@ -23,15 +23,16 @@ use crate::ffi::segment::{get_segm_by_name, get_segm_qty, getnseg, getseg};
 use crate::ffi::util::{is_align_insn, next_head, prev_head, str2reg};
 use crate::ffi::xref::{xrefblk_t, xrefblk_t_first_from, xrefblk_t_first_to};
 
-use crate::bookmarks::Bookmarks;
+use crate::bookmarks::{Bookmarks, BookmarksMut};
 use crate::decompiler::CFunction;
-use crate::func::{Function, FunctionId};
+use crate::func::Function;
 use crate::insn::{Insn, Register};
 use crate::meta::{Metadata, MetadataMut};
 use crate::name::NameList;
 use crate::plugin::Plugin;
 use crate::processor::Processor;
-use crate::segment::{Segment, SegmentId};
+use crate::refs::{Id, Ref, RefMut};
+use crate::segment::Segment;
 use crate::strings::StringList;
 use crate::xref::{XRef, XRefQuery};
 use crate::{Address, AddressFlags, IDAError, IDARuntimeHandle, prepare_library};
@@ -190,14 +191,34 @@ impl IDB {
         }
     }
 
-    pub fn function_at(&self, ea: Address) -> Option<Function<'_>> {
+    pub fn function_at(&self, ea: Address) -> Option<Ref<'_, Function>> {
         let ptr = unsafe { get_func(ea.into()) };
 
         if ptr.is_null() {
             return None;
         }
 
-        Some(Function::from_ptr(ptr))
+        let index = unsafe { get_func_num(ea.into()) }.0;
+        if index < 0 {
+            return None;
+        }
+
+        Some(Ref::new(Function::from_ptr(ptr)))
+    }
+
+    pub fn function_at_mut(&mut self, ea: Address) -> Option<RefMut<'_, Function>> {
+        let ptr = unsafe { get_func(ea.into()) };
+
+        if ptr.is_null() {
+            return None;
+        }
+
+        let index = unsafe { get_func_num(ea.into()) }.0;
+        if index < 0 {
+            return None;
+        }
+
+        Some(RefMut::new(Function::from_ptr(ptr)))
     }
 
     pub fn next_head(&self, ea: Address) -> Option<Address> {
@@ -231,15 +252,15 @@ impl IDB {
         Some(Insn::from_repr(insn))
     }
 
-    pub fn decompile<'a>(&'a self, f: &Function<'a>) -> Result<CFunction<'a>, IDAError> {
+    pub fn decompile(&self, f: &Function) -> Result<CFunction<'_>, IDAError> {
         self.decompile_with(f, false)
     }
 
-    pub fn decompile_with<'a>(
-        &'a self,
-        f: &Function<'a>,
+    pub fn decompile_with(
+        &self,
+        f: &Function,
         all_blocks: bool,
-    ) -> Result<CFunction<'a>, IDAError> {
+    ) -> Result<CFunction<'_>, IDAError> {
         if !self.decompiler {
             return Err(IDAError::ffi_with("no decompiler available"));
         }
@@ -250,45 +271,90 @@ impl IDB {
         })
     }
 
-    pub fn function_by_id(&self, id: FunctionId) -> Option<Function<'_>> {
-        let ptr = unsafe { getn_func(id) };
+    pub fn function_by_id(&self, id: impl Into<Id<Function>>) -> Option<Ref<'_, Function>> {
+        let index = id.into().index();
+        let ptr = unsafe { getn_func(index) };
 
         if ptr.is_null() {
             return None;
         }
 
-        Some(Function::from_ptr(ptr))
+        Some(Ref::new(Function::from_ptr(ptr)))
     }
 
-    pub fn functions<'a>(&'a self) -> impl Iterator<Item = (FunctionId, Function<'a>)> + 'a {
-        (0..self.function_count()).filter_map(|id| self.function_by_id(id).map(|f| (id, f)))
+    pub fn function_by_id_mut(
+        &mut self,
+        id: impl Into<Id<Function>>,
+    ) -> Option<RefMut<'_, Function>> {
+        let index = id.into().index();
+        let ptr = unsafe { getn_func(index) };
+
+        if ptr.is_null() {
+            return None;
+        }
+
+        Some(RefMut::new(Function::from_ptr(ptr)))
+    }
+
+    pub fn functions(&self) -> impl Iterator<Item = Ref<'_, Function>> + '_ {
+        (0..self.function_count()).filter_map(|id| self.function_by_id(id))
     }
 
     pub fn function_count(&self) -> usize {
         unsafe { get_func_qty() }
     }
 
-    pub fn segment_at(&self, ea: Address) -> Option<Segment<'_>> {
+    pub fn segment_at(&self, ea: Address) -> Option<Ref<'_, Segment>> {
         let ptr = unsafe { getseg(ea.into()) };
 
         if ptr.is_null() {
             return None;
         }
 
-        Some(Segment::from_ptr(ptr))
+        // Find the segment index by iterating through segments
+        for id in 0..self.segment_count() {
+            if let Some(seg) = self.segment_by_id(id) {
+                if seg.contains_address(ea) {
+                    return Some(seg);
+                }
+            }
+        }
+        None
     }
 
-    pub fn segment_by_id(&self, id: SegmentId) -> Option<Segment<'_>> {
-        let ptr = unsafe { getnseg((id as i32).into()) };
+    pub fn segment_at_mut(&mut self, ea: Address) -> Option<RefMut<'_, Segment>> {
+        let ptr = unsafe { getseg(ea.into()) };
 
         if ptr.is_null() {
             return None;
         }
 
-        Some(Segment::from_ptr(ptr))
+        Some(RefMut::new(Segment::from_ptr(ptr)))
     }
 
-    pub fn segment_by_name(&self, name: impl AsRef<str>) -> Option<Segment<'_>> {
+    pub fn segment_by_id(&self, id: impl Into<Id<Segment>>) -> Option<Ref<'_, Segment>> {
+        let index = id.into().index();
+        let ptr = unsafe { getnseg((index as i32).into()) };
+
+        if ptr.is_null() {
+            return None;
+        }
+
+        Some(Ref::new(Segment::from_ptr(ptr)))
+    }
+
+    pub fn segment_by_id_mut(&mut self, id: impl Into<Id<Segment>>) -> Option<RefMut<'_, Segment>> {
+        let index = id.into().index();
+        let ptr = unsafe { getnseg((index as i32).into()) };
+
+        if ptr.is_null() {
+            return None;
+        }
+
+        Some(RefMut::new(Segment::from_ptr(ptr)))
+    }
+
+    pub fn segment_by_name(&self, name: impl AsRef<str>) -> Option<Ref<'_, Segment>> {
         let s = CString::new(name.as_ref()).ok()?;
         let ptr = unsafe { get_segm_by_name(s.as_ptr()) };
 
@@ -296,11 +362,11 @@ impl IDB {
             return None;
         }
 
-        Some(Segment::from_ptr(ptr))
+        Some(Ref::new(Segment::from_ptr(ptr)))
     }
 
-    pub fn segments<'a>(&'a self) -> impl Iterator<Item = (SegmentId, Segment<'a>)> + 'a {
-        (0..self.segment_count()).filter_map(|id| self.segment_by_id(id).map(|s| (id, s)))
+    pub fn segments(&self) -> impl Iterator<Item = Ref<'_, Segment>> + '_ {
+        (0..self.segment_count()).filter_map(|id| self.segment_by_id(id))
     }
 
     pub fn segment_count(&self) -> usize {
@@ -364,12 +430,12 @@ impl IDB {
         if s.is_empty() { None } else { Some(s) }
     }
 
-    pub fn set_cmt(&self, ea: Address, comm: impl AsRef<str>) -> Result<(), IDAError> {
+    pub fn set_cmt(&mut self, ea: Address, comm: impl AsRef<str>) -> Result<(), IDAError> {
         self.set_cmt_with(ea, comm, false)
     }
 
     pub fn set_cmt_with(
-        &self,
+        &mut self,
         ea: Address,
         comm: impl AsRef<str>,
         rptble: bool,
@@ -384,21 +450,24 @@ impl IDB {
         }
     }
 
-    pub fn set_func_cmt(&self, ea: Address, comm: impl AsRef<str>) -> Result<(), IDAError> {
+    pub fn set_func_cmt(&mut self, ea: Address, comm: impl AsRef<str>) -> Result<(), IDAError> {
         self.set_func_cmt_with(ea, comm, false)
     }
 
     pub fn set_func_cmt_with(
-        &self,
+        &mut self,
         ea: Address,
         comm: impl AsRef<str>,
         rptble: bool,
     ) -> Result<(), IDAError> {
-        let f = self
-            .function_at(ea)
-            .ok_or_else(|| IDAError::ffi_with(format!("no function found at address {ea:#x}")))?;
+        let ptr = unsafe { get_func(ea.into()) };
+        if ptr.is_null() {
+            return Err(IDAError::ffi_with(format!(
+                "no function found at address {ea:#x}"
+            )));
+        }
         let s = CString::new(comm.as_ref()).map_err(IDAError::ffi)?;
-        if unsafe { idalib_set_func_cmt(f.as_ptr() as _, s.as_ptr(), rptble) } {
+        if unsafe { idalib_set_func_cmt(ptr, s.as_ptr(), rptble) } {
             Ok(())
         } else {
             Err(IDAError::ffi_with(format!(
@@ -407,12 +476,12 @@ impl IDB {
         }
     }
 
-    pub fn append_cmt(&self, ea: Address, comm: impl AsRef<str>) -> Result<(), IDAError> {
+    pub fn append_cmt(&mut self, ea: Address, comm: impl AsRef<str>) -> Result<(), IDAError> {
         self.append_cmt_with(ea, comm, false)
     }
 
     pub fn append_cmt_with(
-        &self,
+        &mut self,
         ea: Address,
         comm: impl AsRef<str>,
         rptble: bool,
@@ -427,11 +496,11 @@ impl IDB {
         }
     }
 
-    pub fn remove_cmt(&self, ea: Address) -> Result<(), IDAError> {
+    pub fn remove_cmt(&mut self, ea: Address) -> Result<(), IDAError> {
         self.remove_cmt_with(ea, false)
     }
 
-    pub fn remove_cmt_with(&self, ea: Address, rptble: bool) -> Result<(), IDAError> {
+    pub fn remove_cmt_with(&mut self, ea: Address, rptble: bool) -> Result<(), IDAError> {
         if unsafe { set_cmt(ea.into(), c"".as_ptr(), rptble) } {
             Ok(())
         } else {
@@ -441,15 +510,18 @@ impl IDB {
         }
     }
 
-    pub fn remove_func_cmt(&self, ea: Address) -> Result<(), IDAError> {
+    pub fn remove_func_cmt(&mut self, ea: Address) -> Result<(), IDAError> {
         self.remove_func_cmt_with(ea, false)
     }
 
-    pub fn remove_func_cmt_with(&self, ea: Address, rptble: bool) -> Result<(), IDAError> {
-        let f = self
-            .function_at(ea)
-            .ok_or_else(|| IDAError::ffi_with(format!("no function found at address {ea:#x}")))?;
-        if unsafe { idalib_set_func_cmt(f.as_ptr(), c"".as_ptr(), rptble) } {
+    pub fn remove_func_cmt_with(&mut self, ea: Address, rptble: bool) -> Result<(), IDAError> {
+        let ptr = unsafe { get_func(ea.into()) };
+        if ptr.is_null() {
+            return Err(IDAError::ffi_with(format!(
+                "no function found at address {ea:#x}"
+            )));
+        }
+        if unsafe { idalib_set_func_cmt(ptr, c"".as_ptr(), rptble) } {
             Ok(())
         } else {
             Err(IDAError::ffi_with(format!(
@@ -460,6 +532,10 @@ impl IDB {
 
     pub fn bookmarks(&self) -> Bookmarks<'_> {
         Bookmarks::new(self)
+    }
+
+    pub fn bookmarks_mut(&mut self) -> BookmarksMut<'_> {
+        BookmarksMut::new(self)
     }
 
     pub fn find_text(&self, start_ea: Address, text: impl AsRef<str>) -> Option<Address> {

@@ -87,6 +87,7 @@ pub mod meta;
 pub mod name;
 pub mod plugin;
 pub mod processor;
+pub mod refs;
 pub mod segment;
 pub mod strings;
 pub mod xref;
@@ -96,6 +97,7 @@ pub use idalib_sys as ffi;
 pub use ffi::IDAError;
 pub use idb::{IDB, IDBOpenOptions};
 pub use license::{LicenseId, is_valid_license, license_id};
+pub use refs::{HasId, Id, Ref, RefMut};
 
 pub type Address = u64;
 pub struct AddressFlags<'a> {

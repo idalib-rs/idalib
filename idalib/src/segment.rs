@@ -1,4 +1,3 @@
-use std::marker::PhantomData;
 use std::mem;
 use std::pin::Pin;
 
@@ -7,13 +6,12 @@ use bitflags::bitflags;
 
 use crate::ffi::range_t;
 use crate::ffi::segment::*;
-use crate::idb::IDB;
+use crate::refs::{HasId, Id};
 use crate::Address;
 
-pub struct Segment<'a> {
+pub struct Segment {
     ptr: *mut segment_t,
     _lock: Pin<Box<lock_segment>>,
-    _marker: PhantomData<&'a IDB>,
 }
 
 pub type SegmentId = usize;
@@ -210,13 +208,19 @@ impl SegmentType {
     }
 }
 
-impl<'a> Segment<'a> {
+impl HasId for Segment {
+    fn id(&self) -> Id<Self> {
+        let index = unsafe { get_segm_num(self.start_address().into()) };
+        Id::new(index.0 as _)
+    }
+}
+
+impl Segment {
     pub(crate) fn from_ptr(ptr: *mut segment_t) -> Self {
         let lock = unsafe { Box::emplace(lock_segment::new(ptr)) };
         Self {
             ptr,
             _lock: lock,
-            _marker: PhantomData,
         }
     }
 

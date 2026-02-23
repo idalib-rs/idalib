@@ -1,3 +1,4 @@
+use std::ffi::CString;
 use std::marker::PhantomData;
 use std::mem;
 use std::pin::Pin;
@@ -11,17 +12,16 @@ use crate::Address;
 use crate::ffi::func::*;
 use crate::ffi::xref::has_external_refs;
 use crate::ffi::{BADADDR, IDAError, range_t};
-use crate::idb::IDB;
+use crate::refs::{HasId, Id};
 
-pub struct Function<'a> {
+pub struct Function {
     ptr: *mut func_t,
     _lock: Pin<Box<lock_func>>,
-    _marker: PhantomData<&'a IDB>,
 }
 
 pub struct FunctionCFG<'a> {
     flow_chart: UniquePtr<qflow_chart_t>,
-    _marker: PhantomData<&'a Function<'a>>,
+    _marker: PhantomData<&'a Function>,
 }
 
 pub struct BasicBlock<'a> {
@@ -166,13 +166,19 @@ bitflags! {
     }
 }
 
-impl<'a> Function<'a> {
+impl HasId for Function {
+    fn id(&self) -> Id<Self> {
+        let index = unsafe { get_func_num(self.start_address().into()) };
+        Id::new(index.0 as _)
+    }
+}
+
+impl Function {
     pub(crate) fn from_ptr(ptr: *mut func_t) -> Self {
         let lock = unsafe { Box::emplace(lock_func::new(ptr)) };
         Self {
             ptr,
             _lock: lock,
-            _marker: PhantomData,
         }
     }
 
@@ -266,6 +272,22 @@ impl<'a> Function<'a> {
             flow_chart: ptr.map_err(IDAError::ffi)?,
             _marker: PhantomData,
         })
+    }
+
+    pub fn set_cmt(&mut self, comm: impl AsRef<str>) -> Result<(), IDAError> {
+        self.set_cmt_with(comm, false)
+    }
+
+    pub fn set_cmt_with(&mut self, comm: impl AsRef<str>, rptble: bool) -> Result<(), IDAError> {
+        let s = CString::new(comm.as_ref()).map_err(IDAError::ffi)?;
+        if unsafe { idalib_set_func_cmt(self.ptr, s.as_ptr(), rptble) } {
+            Ok(())
+        } else {
+            Err(IDAError::ffi_with(format!(
+                "failed to set function comment at {:#x}",
+                self.start_address()
+            )))
+        }
     }
 }
 
