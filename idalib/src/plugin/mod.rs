@@ -7,6 +7,12 @@ use crate::idb::IDB;
 
 pub use crate::ffi::processor::ids as id;
 
+#[cfg(feature = "plugin")]
+mod plugmod;
+#[cfg(feature = "plugin")]
+pub use plugmod::*;
+
+
 bitflags! {
     #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct PluginFlags: u64 {

@@ -6,6 +6,7 @@ use bitflags::bitflags;
 use crate::Address;
 use crate::ffi::BADADDR;
 use crate::ffi::inf::*;
+use crate::ffi::nalt::*;
 use crate::idb::IDB;
 
 bitflags! {
@@ -813,6 +814,30 @@ impl<'a> Metadata<'a> {
 
     pub fn strlit_pref(&self) -> String {
         unsafe { idalib_inf_get_strlit_pref() }
+    }
+
+    pub fn input_file_md5(&self) -> [u8; 16] {
+        let mut md5 = [0u8; 16];
+        unsafe {
+            retrieve_input_file_md5(md5.as_mut_ptr());
+        }
+        md5
+    }
+
+    pub fn input_file_sha256(&self) -> [u8; 32] {
+        let mut sha256 = [0u8; 32];
+        unsafe {
+            retrieve_input_file_sha256(sha256.as_mut_ptr());
+        }
+        sha256
+    }
+
+    pub fn input_file_path(&self) -> String {
+        unsafe { idalib_get_input_file_path() }
+    }
+
+    pub fn input_file_size(&self) -> usize {
+        unsafe { retrieve_input_file_size() }
     }
 }
 

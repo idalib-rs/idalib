@@ -1,9 +1,9 @@
 [package]
 name = "idalib-sys"
-authors = ["Sam L. Thomas <sam@binarly.io>", "Yegor Vasilenko <yegor@binarly.io>", "Marco Ivaldi <raptor@0xdeadbeef.info>"]
-version = "0.6.0+9.1.250226"
+authors = ["Sam L. Thomas <st@xv.ax>", "Yegor Vasilenko <yv@yegor.cc>", "Marco Ivaldi <raptor@0xdeadbeef.info>"]
+version = "0.8.1+9.3.260213"
 description = "Idiomatic bindings to IDA SDK"
-repository = "https://github.com/binarly-io/idalib"
+repository = "https://github.com/idalib-rs/idalib"
 documentation = "https://idalib.rs/idalib_sys"
 homepage = "https://idalib.rs"
 keywords = ["reverse-engineering", "ida", "ida-pro", "idalib"]
@@ -12,10 +12,20 @@ license = "MIT OR Apache-2.0"
 readme = "../README.md"
 edition = "2024"
 build = "build.rs"
+links = "idalib"
+include = [
+  "/build.rs",
+  "/src",
+  "/sdk/src/include",
+  "/sdk/src/lib/x64_linux_gcc_64/*.so",
+  "/sdk/src/lib/x64_mac_clang_64/*.dylib",
+  "/sdk/src/lib/arm64_mac_clang_64/*.dylib",
+  "/sdk/src/lib/x64_win_vc_64/*.lib",
+]
 
 [dependencies]
 anyhow = "1"
-autocxx = "0.28"
+autocxx = "0.27"
 bitflags = "2"
 cxx = "1"
 thiserror = "1"
@@ -30,6 +40,6 @@ objc = "0.2"
 windows-sys = { version = "0.59.0", features = ["Win32_System_Threading"] }
 
 [build-dependencies]
-autocxx-bindgen = "0.72"
-autocxx-build = "0.28"
+autocxx-bindgen = "0.71"
+autocxx-build = "0.27"
 cxx-build = "1"

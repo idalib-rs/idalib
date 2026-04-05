@@ -19,16 +19,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
-      - name: prepare IDA SDK
-        env:
-          IDASDK91_URL: ${{ secrets.IDASDK91_URL }}
-          IDASDK91_PASSWORD: ${{ secrets.IDASDK91_PASSWORD }}
-        run: |
-          curl -o "${{ runner.temp }}/idasdk91.zip" -L "$IDASDK91_URL"
-          unzip -d "${{ runner.temp }}" -P "$IDASDK91_PASSWORD" "${{ runner.temp }}/idasdk91.zip"
       - name: generate documentation
-        env:
-          IDASDKDIR: "${{ runner.temp }}/idasdk91"
         run: cargo doc --no-deps
       - name: git configuration
         run: |
@@ -40,7 +31,7 @@ jobs:
           git fetch --all
           git checkout gh-pages
           cp -R target/doc/* .
-          rm -rf target Cargo.lock
+          rm -rf target Cargo.lock .gitmodules idalib-sys/sdk
           git add .
           git config push.autosetupremote true
           git commit -m 'update documentation'

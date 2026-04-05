@@ -1,5 +1,59 @@
 # Changelog
 
+## 0.8.1 (2026-02-21)
+
+Bugfix:
+- Fix build issues on Windows caused by SDK.
+
+## 0.8.0 (2026-02-20)
+
+- Compatibility release for IDA 9.3 (contributor:
+  [@yeggor](https://github.com/yeggor)).
+
+## 0.7.2 (2025-09-16)
+
+Bugfix:
+- Fix comments API and example.
+
+## 0.7.1 (2025-09-13)
+
+Bugfix:
+- Fix idalib-build so it correctly references the SDK.
+
+## 0.7.0 (2025-09-12)
+
+Compatibility release for IDA 9.2.
+
+Features:
+- Additional comment APIs (contributor:
+  [@Irate-Walrus](https://github.com/Irate-Walrus)).
+- File type selection via `IDBOpenOptions` (contributor:
+  [@withzombies](https://github.com/withzombies)).
+
+Miscellaneous:
+- Use open-source IDA SDK as a submodule.
+- Downgrade to autocxx 0.27.x due to build issues reported by
+  [@coleleavitt](https://github.com/coleleavitt).
+- License check structure updates (contributor:
+  [@yeggor](https://github.com/yeggor)).
+
+## 0.6.1 (2025-07-15)
+
+Features:
+- Add string list iterator (contributor:
+  [@williballenthin](https://github.com/williballenthin)]).
+- Add `input_file_path`, `input_file_size`, `input_file_sha256`,
+  `input_file_md5` to `Metadata`.
+- Add `NameList`, `NameListIterator`, and `Name` to access/iterate over names
+  in the database.
+- Add `AddressFlags` and basic APIs to check if an address corresponds to code
+  or data.
+- Add `idalib::version` to get the IDA version information.
+
+Miscellaneous:
+- Update GitHub workflows to fix Windows build issues. (contributor:
+  [@0xdea](https://github.com/0xdea)).
+
 ## 0.6.0 (2025-05-21)
 
 Features:

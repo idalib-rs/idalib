@@ -3,13 +3,13 @@ use std::path::{Path, PathBuf};
 
 fn link_path() -> PathBuf {
     #[cfg(target_os = "macos")]
-    return PathBuf::from("/Applications/IDA Professional 9.1.app/Contents/MacOS");
+    return PathBuf::from("/Applications/IDA Professional 9.3.app/Contents/MacOS");
 
     #[cfg(target_os = "linux")]
-    return PathBuf::from(env::var("HOME").unwrap()).join("ida-pro-9.1");
+    return PathBuf::from(env::var("HOME").unwrap()).join("ida-pro-9.3");
 
     #[cfg(target_os = "windows")]
-    return PathBuf::from("C:\\Program Files\\IDA Professional 9.1");
+    return PathBuf::from("C:\\Program Files\\IDA Professional 9.3");
 }
 
 pub fn idalib_sdk_paths() -> (PathBuf, PathBuf, PathBuf, PathBuf) {
@@ -17,14 +17,11 @@ pub fn idalib_sdk_paths() -> (PathBuf, PathBuf, PathBuf, PathBuf) {
 }
 
 pub fn idalib_sdk_paths_with(check: bool) -> (PathBuf, PathBuf, PathBuf, PathBuf) {
-    let sdk_path = PathBuf::from(env::var("IDASDKDIR").expect("IDASDKDIR should be set"));
+    let sdk_path = PathBuf::from(env!("IDALIB_SDK"));
     let pro_h = sdk_path.join("include").join("pro.h");
 
     if check && !pro_h.exists() {
-        panic!(
-            "`{}` does not exist; SDK specified by `IDASDKDIR` is not usable",
-            pro_h.display()
-        );
+        panic!("`{}` does not exist; SDK is not usable", pro_h.display());
     }
 
     let (stubs_path, idalib, ida) = if cfg!(target_os = "linux") {

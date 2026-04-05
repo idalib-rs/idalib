@@ -29,6 +29,8 @@ pub enum IDAError {
     InvalidLicense,
     #[error("could not generate pattern or signature files")]
     MakeSigs,
+    #[error("could not get library version")]
+    GetVersion,
 }
 
 impl IDAError {
@@ -52,6 +54,8 @@ impl IDAError {
 }
 
 include_cpp! {
+    // NOTE: this fixes compilation issues on Windows when cross-compiling
+    #include "fixups.h"
     // NOTE: this fixes autocxx's inability to detect ea_t, optype_t as POD...
     #include "types.h"
 
@@ -66,6 +70,8 @@ include_cpp! {
     #include "idp.hpp"
     #include "loader.hpp"
     #include "moves.hpp"
+    #include "nalt.hpp"
+    #include "name.hpp"
     #include "pro.h"
     #include "segment.hpp"
     #include "strlist.hpp"
@@ -84,6 +90,12 @@ include_cpp! {
 
     // auto
     generate!("auto_wait")
+
+    // bytes
+    generate_pod!("flags64_t")
+    generate!("is_data")
+    generate!("is_code")
+    generate!("get_flags")
 
     // entry
     generate!("get_entry")
@@ -360,6 +372,20 @@ include_cpp! {
     generate!("PLUGIN_FIX")
     generate!("PLUGIN_MULTI")
     generate!("PLUGIN_SCRIPTED")
+
+    // nalt
+    generate!("retrieve_input_file_md5")
+    generate!("retrieve_input_file_sha256")
+    generate!("retrieve_input_file_size")
+
+    // name(s)
+    generate!("get_nlist_idx")
+    generate!("get_nlist_size")
+    generate!("get_nlist_ea")
+    generate!("get_nlist_name")
+    generate!("is_in_nlist")
+    generate!("is_public_name")
+    generate!("is_weak_name")
 }
 
 pub mod hexrays {
@@ -672,7 +698,7 @@ pub mod plugin {
     #![allow(unused)]
 
     pub use super::ffi::{find_plugin, run_plugin};
-    pub use super::ffix::{idalib_plugin_flags, idalib_plugin_version};
+    pub use super::ffix::{idalib_create_plugmod, idalib_plugin_flags, idalib_plugin_version};
 
     include!(concat!(env!("OUT_DIR"), "/plugin.rs"));
 
@@ -692,7 +718,39 @@ pub mod plugin {
             PLUGIN_PROC, PLUGIN_SCRIPTED, PLUGIN_SEG, PLUGIN_UNL,
         };
     }
+
+    pub trait PlugModBridge: Send + Sync + 'static {
+        fn run(&mut self, arg: usize) -> bool;
+        fn term(&mut self);
+    }
+
+    pub struct PlugMod {
+        inner: Box<dyn PlugModBridge>,
+    }
+
+    impl PlugMod {
+        pub fn new<T: PlugModBridge>(inner: T) -> Self {
+            Self {
+                inner: Box::new(inner),
+            }
+        }
+
+        pub fn run(&mut self, arg: usize) -> bool {
+            self.inner.run(arg)
+        }
+
+        pub fn term(&mut self) {
+            self.inner.term();
+        }
+    }
 }
+
+// NOTE: this is required, since we can't do:
+//
+// ```
+// type PlugMod = crate::plugin::PlugMod;
+// ```
+pub(crate) use plugin::PlugMod;
 
 pub mod pod {
     #![allow(non_camel_case_types)]
@@ -721,6 +779,13 @@ mod ffix {
         desc: String,
     }
 
+    extern "Rust" {
+        type PlugMod;
+
+        fn run(self: &mut PlugMod, arg: usize) -> bool;
+        fn term(self: &mut PlugMod);
+    }
+
     unsafe extern "C++" {
         include!("autocxxgen_ffi.h");
         include!("idalib.hpp");
@@ -732,13 +797,16 @@ mod ffix {
         include!("entry_extras.h");
         include!("func_extras.h");
         include!("hexrays_extras.h");
+        include!("idalib_extras.h");
         include!("inf_extras.h");
         include!("kernwin_extras.h");
         include!("loader_extras.h");
+        include!("nalt_extras.h");
         include!("ph_extras.h");
         include!("segm_extras.h");
         include!("search_extras.h");
         include!("strings_extras.h");
+        include!("plugin_extras.h");
 
         type c_short = autocxx::c_short;
         type c_int = autocxx::c_int;
@@ -768,6 +836,9 @@ mod ffix {
         type cblock_iter;
 
         type plugin_t = super::plugin::plugin_t;
+        type plugmod_t = super::plugin::plugmod_t;
+
+        unsafe fn idalib_create_plugmod(pm: Box<PlugMod>) -> *mut plugmod_t;
 
         unsafe fn init_library(argc: c_int, argv: *mut *mut c_char) -> c_int;
 
@@ -785,6 +856,8 @@ mod ffix {
 
         unsafe fn idalib_func_flags(f: *const func_t) -> u64;
         unsafe fn idalib_func_name(f: *const func_t) -> Result<String>;
+        unsafe fn idalib_get_func_cmt(f: *const func_t, rptble: bool) -> Result<String>;
+        unsafe fn idalib_set_func_cmt(f: *const func_t, cmt: *const c_char, rptble: bool) -> bool;
 
         unsafe fn idalib_func_flow_chart(
             f: *mut func_t,
@@ -1032,8 +1105,16 @@ mod ffix {
         unsafe fn idalib_get_qword(ea: c_ulonglong) -> u64;
         unsafe fn idalib_get_bytes(ea: c_ulonglong, buf: &mut Vec<u8>) -> Result<usize>;
 
+        unsafe fn idalib_get_input_file_path() -> String;
+
         unsafe fn idalib_plugin_version(p: *const plugin_t) -> u64;
         unsafe fn idalib_plugin_flags(p: *const plugin_t) -> u64;
+
+        unsafe fn idalib_get_library_version(
+            major: *mut c_int,
+            minor: *mut c_int,
+            build: *mut c_int,
+        ) -> bool;
     }
 }
 
@@ -1112,8 +1193,9 @@ pub mod func {
         get_func_qty, getn_func, lock_func, qbasic_block_t, qflow_chart_t,
     };
     pub use super::ffix::{
-        idalib_func_flags, idalib_func_flow_chart, idalib_func_name, idalib_qbasic_block_preds,
-        idalib_qbasic_block_succs, idalib_qflow_graph_getn_block,
+        idalib_func_flags, idalib_func_flow_chart, idalib_func_name, idalib_get_func_cmt,
+        idalib_qbasic_block_preds, idalib_qbasic_block_succs, idalib_qflow_graph_getn_block,
+        idalib_set_func_cmt,
     };
 
     pub mod flags {
@@ -1159,6 +1241,7 @@ pub mod segment {
 }
 
 pub mod bytes {
+    pub use super::ffi::{flags64_t, get_flags, is_code, is_data};
     pub use super::ffix::{
         idalib_get_byte, idalib_get_bytes, idalib_get_dword, idalib_get_qword, idalib_get_word,
     };
@@ -1204,9 +1287,23 @@ pub mod strings {
     pub use super::ffix::{idalib_get_strlist_item_addr, idalib_get_strlist_item_length};
 }
 
+pub mod nalt {
+    pub use super::ffi::{
+        retrieve_input_file_md5, retrieve_input_file_sha256, retrieve_input_file_size,
+    };
+    pub use super::ffix::idalib_get_input_file_path;
+}
+
+pub mod name {
+    pub use super::ffi::{
+        get_nlist_ea, get_nlist_idx, get_nlist_name, get_nlist_size, is_in_nlist, is_public_name,
+        is_weak_name,
+    };
+}
+
 pub mod ida {
     use std::env;
-    use std::ffi::{CStr, CString};
+    use std::ffi::CString;
     use std::path::Path;
     use std::ptr;
 
@@ -1344,9 +1441,7 @@ pub mod ida {
         let path = CString::new(path.as_ref().to_string_lossy().as_ref()).map_err(IDAError::ffi)?;
         args.push(path);
 
-        let idalib0 = CStr::from_bytes_with_nul(b"idalib\0").map_err(IDAError::ffi)?;
-
-        let argv = std::iter::once(idalib0.as_ptr())
+        let argv = std::iter::once(c"idalib".as_ptr())
             .chain(args.iter().map(|s| s.as_ptr()))
             .collect::<Vec<_>>();
         let argc = argv.len();
@@ -1373,5 +1468,22 @@ pub mod ida {
         );
 
         unsafe { ffi::close_database(save) }
+    }
+
+    pub fn library_version() -> Result<(i32, i32, i32), IDAError> {
+        assert!(
+            is_main_thread(),
+            "IDA cannot function correctly when not running on the main thread"
+        );
+
+        let mut major = c_int(0);
+        let mut minor = c_int(0);
+        let mut build = c_int(0);
+
+        if unsafe { ffix::idalib_get_library_version(&mut major, &mut minor, &mut build) } {
+            Ok((major.0 as _, minor.0 as _, build.0 as _))
+        } else {
+            Err(IDAError::GetVersion)
+        }
     }
 }

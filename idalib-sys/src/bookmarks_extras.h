@@ -67,6 +67,7 @@ bool idalib_bookmarks_t_erase(uint32 index) {
 }
 
 rust::u32 idalib_bookmarks_t_find_index(ea_t ea) {
+  auto widget = qstring();
   idaplace_t ipl(ea, 0);
   renderer_info_t rinfo;
   rinfo.rtype = TCCRT_FLAT;
@@ -78,6 +79,7 @@ rust::u32 idalib_bookmarks_t_find_index(ea_t ea) {
 }
 
 rust::u32 idalib_bookmarks_t_size(void) {
+  auto widget = qstring();
   ea_t ea = 0;
 
   idaplace_t ipl(ea, 0);

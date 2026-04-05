@@ -9,7 +9,9 @@ use crate::ffi::bytes::*;
 use crate::ffi::comments::{append_cmt, idalib_get_cmt, set_cmt};
 use crate::ffi::conversions::idalib_ea2str;
 use crate::ffi::entry::{get_entry, get_entry_ordinal, get_entry_qty};
-use crate::ffi::func::{get_func, get_func_qty, getn_func};
+use crate::ffi::func::{
+    get_func, get_func_qty, getn_func, idalib_get_func_cmt, idalib_set_func_cmt,
+};
 #[cfg(not(feature = "plugin"))]
 use crate::ffi::hexrays::term_hexrays_plugin;
 use crate::ffi::hexrays::{decompile_func, init_hexrays_plugin};
@@ -29,12 +31,13 @@ use crate::decompiler::CFunction;
 use crate::func::{Function, FunctionId};
 use crate::insn::{Insn, Register};
 use crate::meta::{Metadata, MetadataMut};
+use crate::name::NameList;
 use crate::plugin::Plugin;
 use crate::processor::Processor;
 use crate::segment::{Segment, SegmentId};
 use crate::strings::StringList;
 use crate::xref::{XRef, XRefQuery};
-use crate::{Address, IDAError, IDARuntimeHandle, prepare_library};
+use crate::{Address, AddressFlags, IDAError, IDARuntimeHandle, prepare_library};
 
 pub struct IDB {
     #[cfg(not(feature = "plugin"))]
@@ -50,7 +53,8 @@ pub struct IDB {
 #[cfg(not(feature = "plugin"))]
 pub struct IDBOpenOptions {
     idb: Option<PathBuf>,
-    // ftype: Option<String>,
+    ftype: Option<String>,
+
     save: bool,
     auto_analyse: bool,
 }
@@ -60,7 +64,7 @@ impl Default for IDBOpenOptions {
     fn default() -> Self {
         Self {
             idb: None,
-            // ftype: None,
+            ftype: None,
             save: false,
             auto_analyse: true,
         }
@@ -83,17 +87,10 @@ impl IDBOpenOptions {
         self
     }
 
-    // NOTE: as of IDA 9.1, the file type switch does not work as documented;
-    // we get the following log output:
-    //
-    // ```
-    // Unknown switch '-T' -> OK
-    // ```
-    //
-    // pub fn file_type(&mut self, ftype: impl AsRef<str>) -> &mut Self {
-    //   self.ftype = Some(ftype.as_ref().to_owned());
-    //   self
-    // }
+    pub fn file_type(&mut self, ftype: impl AsRef<str>) -> &mut Self {
+        self.ftype = Some(ftype.as_ref().to_owned());
+        self
+    }
 
     pub fn auto_analyse(&mut self, auto_analyse: bool) -> &mut Self {
         self.auto_analyse = auto_analyse;
@@ -103,11 +100,9 @@ impl IDBOpenOptions {
     pub fn open(&self, path: impl AsRef<Path>) -> Result<IDB, IDAError> {
         let mut args = Vec::new();
 
-        // NOTE: for now, we will disable this functionality (see comment on file_type above).
-        //
-        // if let Some(ftype) = self.ftype.as_ref() {
-        //    args.push(format!("-T{}", ftype));
-        // }
+        if let Some(ftype) = self.ftype.as_ref() {
+            args.push(format!("-T{ftype}"));
+        }
 
         if let Some(idb_path) = self.idb.as_ref() {
             args.push("-c".to_owned());
@@ -198,20 +193,20 @@ impl IDB {
         self.decompiler
     }
 
-    pub fn meta(&self) -> Metadata {
+    pub fn meta(&self) -> Metadata<'_> {
         Metadata::new()
     }
 
-    pub fn meta_mut(&mut self) -> MetadataMut {
+    pub fn meta_mut(&mut self) -> MetadataMut<'_> {
         MetadataMut::new()
     }
 
-    pub fn processor(&self) -> Processor {
+    pub fn processor(&self) -> Processor<'_> {
         let ptr = unsafe { get_ph() };
         Processor::from_ptr(ptr)
     }
 
-    pub fn entries(&self) -> EntryPointIter {
+    pub fn entries(&self) -> EntryPointIter<'_> {
         let limit = unsafe { get_entry_qty() };
         EntryPointIter {
             index: 0,
@@ -220,7 +215,7 @@ impl IDB {
         }
     }
 
-    pub fn function_at(&self, ea: Address) -> Option<Function> {
+    pub fn function_at(&self, ea: Address) -> Option<Function<'_>> {
         let ptr = unsafe { get_func(ea.into()) };
 
         if ptr.is_null() {
@@ -280,7 +275,7 @@ impl IDB {
         })
     }
 
-    pub fn function_by_id(&self, id: FunctionId) -> Option<Function> {
+    pub fn function_by_id(&self, id: FunctionId) -> Option<Function<'_>> {
         let ptr = unsafe { getn_func(id) };
 
         if ptr.is_null() {
@@ -298,7 +293,7 @@ impl IDB {
         unsafe { get_func_qty() }
     }
 
-    pub fn segment_at(&self, ea: Address) -> Option<Segment> {
+    pub fn segment_at(&self, ea: Address) -> Option<Segment<'_>> {
         let ptr = unsafe { getseg(ea.into()) };
 
         if ptr.is_null() {
@@ -308,7 +303,7 @@ impl IDB {
         Some(Segment::from_ptr(ptr))
     }
 
-    pub fn segment_by_id(&self, id: SegmentId) -> Option<Segment> {
+    pub fn segment_by_id(&self, id: SegmentId) -> Option<Segment<'_>> {
         let ptr = unsafe { getnseg((id as i32).into()) };
 
         if ptr.is_null() {
@@ -318,7 +313,7 @@ impl IDB {
         Some(Segment::from_ptr(ptr))
     }
 
-    pub fn segment_by_name(&self, name: impl AsRef<str>) -> Option<Segment> {
+    pub fn segment_by_name(&self, name: impl AsRef<str>) -> Option<Segment<'_>> {
         let s = CString::new(name.as_ref()).ok()?;
         let ptr = unsafe { get_segm_by_name(s.as_ptr()) };
 
@@ -349,7 +344,7 @@ impl IDB {
         if align == 0 { None } else { Some(align as _) }
     }
 
-    pub fn first_xref_from(&self, ea: Address, flags: XRefQuery) -> Option<XRef> {
+    pub fn first_xref_from(&self, ea: Address, flags: XRefQuery) -> Option<XRef<'_>> {
         let mut xref = MaybeUninit::<xrefblk_t>::zeroed();
         let found =
             unsafe { xrefblk_t_first_from(xref.as_mut_ptr(), ea.into(), flags.bits().into()) };
@@ -361,7 +356,7 @@ impl IDB {
         }
     }
 
-    pub fn first_xref_to(&self, ea: Address, flags: XRefQuery) -> Option<XRef> {
+    pub fn first_xref_to(&self, ea: Address, flags: XRefQuery) -> Option<XRef<'_>> {
         let mut xref = MaybeUninit::<xrefblk_t>::zeroed();
         let found =
             unsafe { xrefblk_t_first_to(xref.as_mut_ptr(), ea.into(), flags.bits().into()) };
@@ -383,6 +378,17 @@ impl IDB {
         if s.is_empty() { None } else { Some(s) }
     }
 
+    pub fn get_func_cmt(&self, ea: Address) -> Option<String> {
+        self.get_func_cmt_with(ea, false)
+    }
+
+    pub fn get_func_cmt_with(&self, ea: Address, rptble: bool) -> Option<String> {
+        let f = self.function_at(ea)?;
+        let s = unsafe { idalib_get_func_cmt(f.as_ptr() as _, rptble) }.ok()?;
+
+        if s.is_empty() { None } else { Some(s) }
+    }
+
     pub fn set_cmt(&self, ea: Address, comm: impl AsRef<str>) -> Result<(), IDAError> {
         self.set_cmt_with(ea, comm, false)
     }
@@ -399,6 +405,29 @@ impl IDB {
         } else {
             Err(IDAError::ffi_with(format!(
                 "failed to set comment at {ea:#x}"
+            )))
+        }
+    }
+
+    pub fn set_func_cmt(&self, ea: Address, comm: impl AsRef<str>) -> Result<(), IDAError> {
+        self.set_func_cmt_with(ea, comm, false)
+    }
+
+    pub fn set_func_cmt_with(
+        &self,
+        ea: Address,
+        comm: impl AsRef<str>,
+        rptble: bool,
+    ) -> Result<(), IDAError> {
+        let f = self
+            .function_at(ea)
+            .ok_or_else(|| IDAError::ffi_with(format!("no function found at address {ea:#x}")))?;
+        let s = CString::new(comm.as_ref()).map_err(IDAError::ffi)?;
+        if unsafe { idalib_set_func_cmt(f.as_ptr() as _, s.as_ptr(), rptble) } {
+            Ok(())
+        } else {
+            Err(IDAError::ffi_with(format!(
+                "failed to set function comment at {ea:#x}"
             )))
         }
     }
@@ -428,8 +457,7 @@ impl IDB {
     }
 
     pub fn remove_cmt_with(&self, ea: Address, rptble: bool) -> Result<(), IDAError> {
-        let s = CString::new("").map_err(IDAError::ffi)?;
-        if unsafe { set_cmt(ea.into(), s.as_ptr(), rptble) } {
+        if unsafe { set_cmt(ea.into(), c"".as_ptr(), rptble) } {
             Ok(())
         } else {
             Err(IDAError::ffi_with(format!(
@@ -438,7 +466,24 @@ impl IDB {
         }
     }
 
-    pub fn bookmarks(&self) -> Bookmarks {
+    pub fn remove_func_cmt(&self, ea: Address) -> Result<(), IDAError> {
+        self.remove_func_cmt_with(ea, false)
+    }
+
+    pub fn remove_func_cmt_with(&self, ea: Address, rptble: bool) -> Result<(), IDAError> {
+        let f = self
+            .function_at(ea)
+            .ok_or_else(|| IDAError::ffi_with(format!("no function found at address {ea:#x}")))?;
+        if unsafe { idalib_set_func_cmt(f.as_ptr(), c"".as_ptr(), rptble) } {
+            Ok(())
+        } else {
+            Err(IDAError::ffi_with(format!(
+                "failed to remove comment at {ea:#x}"
+            )))
+        }
+    }
+
+    pub fn bookmarks(&self) -> Bookmarks<'_> {
         Bookmarks::new(self)
     }
 
@@ -490,14 +535,22 @@ impl IDB {
         }
     }
 
-    pub fn strings(&self) -> StringList {
+    pub fn strings(&self) -> StringList<'_> {
         StringList::new(self)
+    }
+
+    pub fn names(&self) -> crate::name::NameList<'_> {
+        NameList::new(self)
     }
 
     pub fn address_to_string(&self, ea: Address) -> Option<String> {
         let s = unsafe { idalib_ea2str(ea.into()) };
 
         if s.is_empty() { None } else { Some(s) }
+    }
+
+    pub fn flags_at(&self, ea: Address) -> AddressFlags<'_> {
+        AddressFlags::new(unsafe { get_flags(ea.into()) })
     }
 
     pub fn get_byte(&self, ea: Address) -> u8 {
@@ -534,7 +587,7 @@ impl IDB {
         &self,
         name: impl AsRef<str>,
         load_if_needed: bool,
-    ) -> Result<Plugin, IDAError> {
+    ) -> Result<Plugin<'_>, IDAError> {
         let plugin = CString::new(name.as_ref()).map_err(IDAError::ffi)?;
         let ptr = unsafe { find_plugin(plugin.as_ptr(), load_if_needed) };
 
@@ -548,7 +601,7 @@ impl IDB {
         }
     }
 
-    pub fn load_plugin(&self, name: impl AsRef<str>) -> Result<Plugin, IDAError> {
+    pub fn load_plugin(&self, name: impl AsRef<str>) -> Result<Plugin<'_>, IDAError> {
         self.find_plugin(name, true)
     }
 }

@@ -71,7 +71,7 @@ impl<'a> CFunction<'a> {
         unsafe { self.ptr.as_ref().expect("valid pointer") }
     }
 
-    pub fn body(&self) -> CBlock {
+    pub fn body(&self) -> CBlock<'_> {
         let cf = self.as_cfunc();
         let ptr = unsafe { cf.body.__bindgen_anon_1.cblock };
 
@@ -83,7 +83,7 @@ impl<'a> CFunction<'a> {
 }
 
 impl<'a> CBlock<'a> {
-    pub fn iter(&self) -> CBlockIter {
+    pub fn iter(&self) -> CBlockIter<'_> {
         CBlockIter {
             it: unsafe { idalib_hexrays_cblock_iter(self.ptr) },
             _marker: PhantomData,

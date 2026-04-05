@@ -36,9 +36,9 @@ fn main() -> anyhow::Result<()> {
 
         println!("- name: {name:?}");
         println!("- bytes: {:x?}", &bytes[..bytes.len().min(16)]);
-        println!("- alignment: {:?}", align);
+        println!("- alignment: {align:?}");
         println!("- bitness: {}", 1 << (bitness + 4));
-        println!("- permissions: {:?}", perms);
+        println!("- permissions: {perms:?}");
     }
 
     println!("functions: {}", idb.function_count());

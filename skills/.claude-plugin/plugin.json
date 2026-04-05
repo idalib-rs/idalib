@@ -1,0 +1,12 @@
+{
+  "name": "idalib-rust-skills",
+  "author": {
+    "name": "Sam L. Thomas",
+    "email": "s@ghost.sh"
+  },
+  "description": "Rust development skills for contributing to IDALIB Rust bindings",
+  "version": "1.0.0",
+  "skills": [
+    "./idalib-rust-style"
+  ]
+}

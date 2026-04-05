@@ -7,11 +7,11 @@ use autocxx::moveit::Emplace;
 use bitflags::bitflags;
 use cxx::UniquePtr;
 
+use crate::Address;
 use crate::ffi::func::*;
 use crate::ffi::xref::has_external_refs;
-use crate::ffi::{range_t, IDAError, BADADDR};
+use crate::ffi::{BADADDR, IDAError, range_t};
 use crate::idb::IDB;
-use crate::Address;
 
 pub struct Function<'a> {
     ptr: *mut func_t,
@@ -207,11 +207,17 @@ impl<'a> Function<'a> {
     pub fn name(&self) -> Option<String> {
         let name = unsafe { idalib_func_name(self.ptr) }.ok()?;
 
-        if name.is_empty() {
-            None
-        } else {
-            Some(name)
-        }
+        if name.is_empty() { None } else { Some(name) }
+    }
+
+    pub fn get_cmt(&self) -> Option<String> {
+        self.get_cmt_with(false)
+    }
+
+    pub fn get_cmt_with(&self, rptble: bool) -> Option<String> {
+        let cmt = unsafe { idalib_get_func_cmt(self.ptr, rptble) }.ok()?;
+
+        if cmt.is_empty() { None } else { Some(cmt) }
     }
 
     pub fn flags(&self) -> FunctionFlags {
@@ -249,11 +255,11 @@ impl<'a> Function<'a> {
         }
     }
 
-    pub fn cfg(&self) -> Result<FunctionCFG, IDAError> {
+    pub fn cfg(&self) -> Result<FunctionCFG<'_>, IDAError> {
         self.cfg_with(FunctionCFGFlags::empty())
     }
 
-    pub fn cfg_with(&self, flags: FunctionCFGFlags) -> Result<FunctionCFG, IDAError> {
+    pub fn cfg_with(&self, flags: FunctionCFGFlags) -> Result<FunctionCFG<'_>, IDAError> {
         let ptr = unsafe { idalib_func_flow_chart(self.ptr, flags.bits().into()) };
 
         Ok(FunctionCFG {
@@ -270,7 +276,7 @@ impl<'a> FunctionCFG<'a> {
             .map(|r| unsafe { mem::transmute::<&qflow_chart_t, &gdl_graph_t>(r) })
     }
 
-    pub fn block_by_id(&self, id: BasicBlockId) -> Option<BasicBlock> {
+    pub fn block_by_id(&self, id: BasicBlockId) -> Option<BasicBlock<'_>> {
         let blk = unsafe {
             idalib_qflow_graph_getn_block(self.flow_chart.as_ref().expect("valid pointer"), id)
         };
@@ -289,7 +295,7 @@ impl<'a> FunctionCFG<'a> {
         Some(BasicBlock::from_parts(blk, kind))
     }
 
-    pub fn entry(&self) -> Option<BasicBlock> {
+    pub fn entry(&self) -> Option<BasicBlock<'_>> {
         let id = unsafe { self.as_gdl_graph().expect("valid pointer").entry() };
 
         if id.0 < 0 {
@@ -299,7 +305,7 @@ impl<'a> FunctionCFG<'a> {
         self.block_by_id(id.0 as _)
     }
 
-    pub fn exit(&self) -> Option<BasicBlock> {
+    pub fn exit(&self) -> Option<BasicBlock<'_>> {
         let id = unsafe { self.as_gdl_graph().expect("valid pointer").exit() };
 
         if id.0 < 0 {

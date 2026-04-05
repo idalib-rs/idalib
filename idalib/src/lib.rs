@@ -10,10 +10,10 @@
 //!
 //! ```toml
 //! [dependencies]
-//! idalib = "0.6"
+//! idalib = "0.8"
 //!
 //! [build-dependencies]
-//! idalib-build = "0.6"
+//! idalib-build = "0.8"
 //! ```
 //!
 //! Here is a basic example of a `build.rs` file:
@@ -26,8 +26,9 @@
 //! ```
 //!
 //! This script uses the `idalib-build` crate to automatically configure the linkage against IDA.
-//! Ensure that the environment variables `IDASDKDIR` and optionally `IDADIR` are set to point to
-//! your IDA SDK and installation directories, respectively.
+//! If IDA is installed in a non-default location, ensure that `IDADIR` is set to point to your
+//! installation directory, if you are linking against IDA's shared libraries, as opposed to the
+//! stub libraries distributed with the SDK.
 //!
 //! ## Setting Environment Variables
 //!
@@ -37,7 +38,6 @@
 //! configuration file (e.g., `.bashrc`, `.zshrc`):
 //!
 //! ```sh,ignore
-//! export IDASDKDIR=/path/to/ida/sdk
 //! export IDADIR=/path/to/ida/installation
 //! ```
 //!
@@ -47,18 +47,16 @@
 //!
 //! **Command Prompt:**
 //! ```cmd
-//! set IDASDKDIR=C:\path\to\ida\sdk
 //! set IDADIR=C:\path\to\ida\installation
 //! ```
 //!
 //! **PowerShell:**
 //! ```powershell,ignore
-//! $env:IDASDKDIR = "C:\path\to\ida\sdk"
 //! $env:IDADIR = "C:\path\to\ida\installation"
 //! ```
 //!
 //! **System Properties:**
-//! Go to "Environment Variables" in System Properties and add `IDASDKDIR` and `IDADIR`.
+//! Go to "Environment Variables" in System Properties and add `IDADIR`.
 //!
 //! ## Example
 //!
@@ -76,7 +74,7 @@
 //!
 #![allow(clippy::needless_lifetimes)]
 
-use std::ffi::c_char;
+use std::marker::PhantomData;
 use std::sync::{Mutex, MutexGuard, OnceLock};
 
 pub mod bookmarks;
@@ -86,6 +84,7 @@ pub mod idb;
 pub mod insn;
 pub mod license;
 pub mod meta;
+pub mod name;
 pub mod plugin;
 pub mod processor;
 pub mod segment;
@@ -95,19 +94,70 @@ pub mod xref;
 pub use idalib_sys as ffi;
 
 pub use ffi::IDAError;
+pub use idb::IDB;
+#[cfg(not(feature = "plugin"))]
+pub use idb::IDBOpenOptions;
 pub use license::{LicenseId, is_valid_license, license_id};
+#[cfg(feature = "plugin")]
+pub use plugin::{IDAPlugin, PluginFlags};
+
+#[cfg(feature = "plugin")]
+pub use idalib_macros::plugin;
 
 pub type Address = u64;
+pub struct AddressFlags<'a> {
+    flags: ffi::bytes::flags64_t,
+    _marker: PhantomData<&'a IDB>,
+}
+
+impl<'a> AddressFlags<'a> {
+    pub(crate) fn new(flags: ffi::bytes::flags64_t) -> Self {
+        Self {
+            flags,
+            _marker: PhantomData,
+        }
+    }
+
+    pub fn is_code(&self) -> bool {
+        unsafe { ffi::bytes::is_code(self.flags) }
+    }
+
+    pub fn is_data(&self) -> bool {
+        unsafe { ffi::bytes::is_data(self.flags) }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct IDAVersion {
+    major: i32,
+    minor: i32,
+    build: i32,
+}
+
+impl IDAVersion {
+    pub fn major(&self) -> i32 {
+        self.major
+    }
+
+    pub fn minor(&self) -> i32 {
+        self.minor
+    }
+
+    pub fn build(&self) -> i32 {
+        self.build
+    }
+}
 
 static INIT: OnceLock<Mutex<()>> = OnceLock::new();
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(not(any(target_os = "windows", feature = "plugin")))]
 unsafe extern "C" {
-    static mut batch: c_char;
+    static mut batch: std::ffi::c_char;
 }
 
 pub(crate) type IDARuntimeHandle = MutexGuard<'static, ()>;
 
+#[cfg(not(feature = "plugin"))]
 pub fn force_batch_mode() {
     #[cfg(not(target_os = "windows"))]
     unsafe {
@@ -115,6 +165,12 @@ pub fn force_batch_mode() {
     }
 }
 
+#[cfg(feature = "plugin")]
+pub fn init_library() -> &'static Mutex<()> {
+    INIT.get_or_init(|| Mutex::new(()))
+}
+
+#[cfg(not(feature = "plugin"))]
 pub fn init_library() -> &'static Mutex<()> {
     INIT.get_or_init(|| {
         force_batch_mode();
@@ -128,7 +184,16 @@ pub(crate) fn prepare_library() -> IDARuntimeHandle {
     mutex.lock().unwrap()
 }
 
+#[cfg(not(feature = "plugin"))]
 pub fn enable_console_messages(enabled: bool) {
     init_library();
     ffi::ida::enable_console_messages(enabled);
+}
+
+pub fn version() -> Result<IDAVersion, IDAError> {
+    ffi::ida::library_version().map(|(major, minor, build)| IDAVersion {
+        major,
+        minor,
+        build,
+    })
 }

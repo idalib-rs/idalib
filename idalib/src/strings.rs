@@ -61,7 +61,7 @@ impl<'a> StringList<'a> {
         unsafe { idalib_get_strlist_item_length(index) }
     }
 
-    pub fn len(&self) -> StringIndex {
+    pub fn len(&self) -> usize {
         unsafe { get_strlist_qty() }
     }
 

@@ -6,10 +6,13 @@
 typedef unsigned __int64 ea_t;
 typedef __int64 sval_t;
 typedef unsigned __int64 uval_t;
+typedef unsigned __int64 flags64_t;
 #elif defined(__GNUC__)
 typedef unsigned long long ea_t;
 typedef long long sval_t;
 typedef unsigned long long uval_t;
+// autocxx cannot resolve the typedef otherwise...
+typedef unsigned long long flags64_t;
 #endif
 
 typedef unsigned char optype_t;

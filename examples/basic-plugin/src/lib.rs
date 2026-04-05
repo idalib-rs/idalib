@@ -1,26 +1,31 @@
 use idalib::ffi::ida::msg;
-use idalib::ffi::plugin::{plugin_t, plugmod_t};
+use idalib::{IDAError, IDAPlugin, IDB, plugin};
 
-#[unsafe(no_mangle)]
-pub static mut PLUGIN: plugin_t = plugin_t {
-    comment: c"this is a basic plugin written in Rust".as_ptr(),
-    flags: 0,
-    init: Some(init),
-    run: Some(run),
-    term: Some(term),
-    help: c"this plugin does nothing useful".as_ptr(),
-    version: 900,
-    wanted_name: c"basic plugin".as_ptr(),
-    wanted_hotkey: c"Ctrl-Shift-B".as_ptr(),
-};
-
-extern "C" fn init() -> *mut plugmod_t {
-    unsafe { msg("[basic-plugin] Hello, world! This is Rust speaking!\n").ok() };
-    std::ptr::null_mut()
+struct BasicPlugin {
+    run_count: usize,
 }
 
-extern "C" fn run(_args: usize) -> bool {
-    true
-}
+#[plugin(
+    name = "basic plugin",
+    comment = "this is a basic plugin written in Rust",
+    help = "this plugin does nothing useful",
+    hotkey = "Ctrl-Shift-B",
+    kind = resident,
+)]
+impl IDAPlugin for BasicPlugin {
+    fn init(_idb: &mut IDB) -> Result<Self, IDAError> {
+        unsafe { msg("[basic-plugin] init\n").ok() };
+        Ok(BasicPlugin { run_count: 0 })
+    }
 
-extern "C" fn term() {}
+    fn run(&mut self, _idb: &mut IDB, _arg: usize) -> Result<(), IDAError> {
+        self.run_count += 1;
+        unsafe { msg(&format!("[basic-plugin] run (count: {})\n", self.run_count)).ok() };
+        Ok(())
+    }
+
+    fn term(&mut self, _idb: &mut IDB) -> Result<(), IDAError> {
+        unsafe { msg("[basic-plugin] term\n").ok() };
+        Ok(())
+    }
+}
