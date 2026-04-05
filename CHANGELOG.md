@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.0 (2026-04-05)
+
+Compatibility release for IDA 9.3sp1.
+
 ## 0.8.1 (2026-02-21)
 
 Bugfix:

@@ -25,21 +25,21 @@ pub fn idalib_sdk_paths_with(check: bool) -> (PathBuf, PathBuf, PathBuf, PathBuf
     }
 
     let (stubs_path, idalib, ida) = if cfg!(target_os = "linux") {
-        let path = sdk_path.join("lib/x64_linux_gcc_64");
+        let path = sdk_path.join("lib/x64_linux_64");
         let idalib = path.join("libidalib.so");
         let ida = path.join("libida.so");
         (path, idalib, ida)
     } else if cfg!(target_os = "macos") {
         let path = if cfg!(target_arch = "x86_64") {
-            sdk_path.join("lib/x64_mac_clang_64")
+            sdk_path.join("lib/x64_mac_64")
         } else {
-            sdk_path.join("lib/arm64_mac_clang_64")
+            sdk_path.join("lib/arm64_mac_64")
         };
         let idalib = path.join("libidalib.dylib");
         let ida = path.join("libida.dylib");
         (path, idalib, ida)
     } else if cfg!(target_os = "windows") {
-        let path = sdk_path.join("lib\\x64_win_vc_64");
+        let path = sdk_path.join("lib\\x64_win_64");
         let idalib = path.join("idalib.lib");
         let ida = path.join("ida.lib");
         (path, idalib, ida)
