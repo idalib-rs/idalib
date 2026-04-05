@@ -9,7 +9,6 @@ members = [
 default-members = [
   "idalib",
   "idalib-build",
-  "idalib-macros",
   "idalib-sys",
 ]
 resolver = "2"
