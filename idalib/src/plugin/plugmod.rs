@@ -1,30 +1,30 @@
-use crate::IDAError;
 use crate::ffi::ida::msg;
 use crate::ffi::plugin::PlugModBridge;
 use crate::idb::IDB;
+use crate::{IDA, IDAError};
 
 pub trait IDAPlugin: Sized + Send + Sync + 'static {
-    fn init(idb: &mut IDB) -> Result<Self, IDAError>;
+    fn init(ida: &mut IDA, idb: &mut IDB) -> Result<Self, IDAError>;
 
-    fn run(&mut self, idb: &mut IDB, arg: usize) -> Result<(), IDAError>;
+    fn run(&mut self, ida: &mut IDA, idb: &mut IDB, arg: usize) -> Result<(), IDAError>;
 
-    fn term(&mut self, _idb: &mut IDB) -> Result<(), IDAError> {
+    fn term(&mut self, _ida: &mut IDA, _idb: &mut IDB) -> Result<(), IDAError> {
         Ok(())
     }
 }
 
 trait IDAPluginErased: Send + Sync {
-    fn run(&mut self, idb: &mut IDB, arg: usize) -> Result<(), IDAError>;
-    fn term(&mut self, idb: &mut IDB) -> Result<(), IDAError>;
+    fn run(&mut self, ida: &mut IDA, idb: &mut IDB, arg: usize) -> Result<(), IDAError>;
+    fn term(&mut self, ida: &mut IDA, idb: &mut IDB) -> Result<(), IDAError>;
 }
 
 impl<P: IDAPlugin> IDAPluginErased for P {
-    fn run(&mut self, idb: &mut IDB, arg: usize) -> Result<(), IDAError> {
-        IDAPlugin::run(self, idb, arg)
+    fn run(&mut self, ida: &mut IDA, idb: &mut IDB, arg: usize) -> Result<(), IDAError> {
+        IDAPlugin::run(self, ida, idb, arg)
     }
 
-    fn term(&mut self, idb: &mut IDB) -> Result<(), IDAError> {
-        IDAPlugin::term(self, idb)
+    fn term(&mut self, ida: &mut IDA, idb: &mut IDB) -> Result<(), IDAError> {
+        IDAPlugin::term(self, ida, idb)
     }
 }
 
@@ -45,7 +45,10 @@ impl PlugmodWrapper {
 
 impl PlugModBridge for PlugmodWrapper {
     fn run(&mut self, arg: usize) -> bool {
-        let result = IDB::current().and_then(|mut idb| self.plugin.run(&mut idb, arg));
+        let result = IDB::current().and_then(|mut idb| {
+            let mut ida = IDA::new(&idb);
+            self.plugin.run(&mut ida, &mut idb, arg)
+        });
         match result {
             Ok(()) => true,
             Err(e) => {
@@ -56,7 +59,10 @@ impl PlugModBridge for PlugmodWrapper {
     }
 
     fn term(&mut self) {
-        let result = IDB::current().and_then(|mut idb| self.plugin.term(&mut idb));
+        let result = IDB::current().and_then(|mut idb| {
+            let mut ida = IDA::new(&idb);
+            self.plugin.term(&mut ida, &mut idb)
+        });
         if let Err(e) = result {
             let _ = unsafe { msg(&format!("[{}] `term` failed: {e}\n", self.name)) };
         }

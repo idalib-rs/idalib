@@ -127,6 +127,20 @@ impl<'a> AddressFlags<'a> {
     }
 }
 
+pub struct IDA;
+
+impl IDA {
+    pub fn new(_: &IDB) -> Self {
+        // NOTE: we take the IDB as an argument to ensure that the caller has access to it,
+        // therefore ensuring the library is correctly initialised.
+        Self
+    }
+
+    pub fn msg(&self, message: impl AsRef<str>) -> Result<(), IDAError> {
+        unsafe { ffi::ida::msg(message) }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct IDAVersion {
     major: i32,

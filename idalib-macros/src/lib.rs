@@ -23,31 +23,8 @@ struct PluginArgs {
     comment: Option<String>,
     help: Option<String>,
     hotkey: Option<String>,
-    flags: Option<Expr>,
     version: Option<i32>,
     kind: PluginKind,
-}
-
-fn validate_flags_expr(expr: &Expr) -> syn::Result<()> {
-    let tokens = quote!(#expr).to_string();
-
-    let forbidden = [
-        (
-            "MULTI",
-            "MULTI is always set automatically; remove from flags",
-        ),
-        ("MOD", "MOD is always set automatically; remove from flags"),
-        ("FIX", "use `kind = resident` instead of flags for FIX"),
-        ("UNL", "use `kind = oneshot` instead of flags for UNL"),
-    ];
-
-    for (flag, message) in forbidden {
-        if tokens.contains(flag) {
-            return Err(syn::Error::new_spanned(expr, message));
-        }
-    }
-
-    Ok(())
 }
 
 impl Parse for PluginArgs {
@@ -56,122 +33,121 @@ impl Parse for PluginArgs {
         let mut comment = None;
         let mut help = None;
         let mut hotkey = None;
-        let mut flags = None;
         let mut version = None;
         let mut kind = PluginKind::Default;
 
         let pairs = Punctuated::<syn::MetaNameValue, Token![,]>::parse_terminated(input)?;
         for pair in pairs {
-            let key = pair.path.get_ident().map(|i| i.to_string());
-            match key.as_deref() {
-                Some("name") => {
-                    if let Expr::Lit(ExprLit {
-                        lit: Lit::Str(s), ..
-                    }) = pair.value
-                    {
-                        name = Some(s.value());
-                    } else {
-                        return Err(syn::Error::new_spanned(
-                            pair.value,
-                            "expected string literal",
-                        ));
-                    }
-                }
-                Some("comment") => {
-                    if let Expr::Lit(ExprLit {
-                        lit: Lit::Str(s), ..
-                    }) = pair.value
-                    {
-                        comment = Some(s.value());
-                    } else {
-                        return Err(syn::Error::new_spanned(
-                            pair.value,
-                            "expected string literal",
-                        ));
-                    }
-                }
-                Some("help") => {
-                    if let Expr::Lit(ExprLit {
-                        lit: Lit::Str(s), ..
-                    }) = pair.value
-                    {
-                        help = Some(s.value());
-                    } else {
-                        return Err(syn::Error::new_spanned(
-                            pair.value,
-                            "expected string literal",
-                        ));
-                    }
-                }
-                Some("hotkey") => {
-                    if let Expr::Lit(ExprLit {
-                        lit: Lit::Str(s), ..
-                    }) = pair.value
-                    {
-                        hotkey = Some(s.value());
-                    } else {
-                        return Err(syn::Error::new_spanned(
-                            pair.value,
-                            "expected string literal",
-                        ));
-                    }
-                }
-                Some("flags") => {
-                    validate_flags_expr(&pair.value)?;
-                    flags = Some(pair.value);
-                }
-                Some("version") => {
-                    if let Expr::Lit(ExprLit {
-                        lit: Lit::Int(i), ..
-                    }) = pair.value
-                    {
-                        version = Some(i.base10_parse()?);
-                    } else {
-                        return Err(syn::Error::new_spanned(
-                            pair.value,
-                            "expected integer literal",
-                        ));
-                    }
-                }
-                Some("kind") => {
-                    if let Expr::Path(ref path) = pair.value {
-                        if let Some(ident) = path.path.get_ident() {
-                            match ident.to_string().as_str() {
-                                "default" => kind = PluginKind::Default,
-                                "resident" => kind = PluginKind::Resident,
-                                "oneshot" => kind = PluginKind::Oneshot,
-                                other => {
-                                    return Err(syn::Error::new_spanned(
-                                        ident,
-                                        format!(
-                                            "unknown kind `{other}`, expected `default`, `resident`, or `oneshot`"
-                                        ),
-                                    ));
-                                }
-                            }
-                        } else {
-                            return Err(syn::Error::new_spanned(
-                                &pair.value,
-                                "expected identifier: `default`, `resident`, or `oneshot`",
-                            ));
-                        }
-                    } else {
-                        return Err(syn::Error::new_spanned(
-                            &pair.value,
-                            "expected identifier: `default`, `resident`, or `oneshot`",
-                        ));
-                    }
-                }
-                Some(other) => {
+            let Some(key) = pair.path.get_ident() else {
+                return Err(syn::Error::new_spanned(pair.path, "expected identifier"));
+            };
+
+            if key == "name" {
+                if let Expr::Lit(ExprLit {
+                    lit: Lit::Str(s), ..
+                }) = pair.value
+                {
+                    name = Some(s.value());
+                    continue;
+                } else {
                     return Err(syn::Error::new_spanned(
-                        pair.path,
-                        format!("unknown attribute `{other}`"),
+                        pair.value,
+                        "expected string literal",
                     ));
                 }
-                None => {
-                    return Err(syn::Error::new_spanned(pair.path, "expected identifier"));
+            }
+
+            if key == "comment" {
+                if let Expr::Lit(ExprLit {
+                    lit: Lit::Str(s), ..
+                }) = pair.value
+                {
+                    comment = Some(s.value());
+                    continue;
+                } else {
+                    return Err(syn::Error::new_spanned(
+                        pair.value,
+                        "expected string literal",
+                    ));
                 }
             }
+
+            if key == "help" {
+                if let Expr::Lit(ExprLit {
+                    lit: Lit::Str(s), ..
+                }) = pair.value
+                {
+                    help = Some(s.value());
+                    continue;
+                } else {
+                    return Err(syn::Error::new_spanned(
+                        pair.value,
+                        "expected string literal",
+                    ));
+                }
+            }
+
+            if key == "hotkey" {
+                if let Expr::Lit(ExprLit {
+                    lit: Lit::Str(s), ..
+                }) = pair.value
+                {
+                    hotkey = Some(s.value());
+                    continue;
+                } else {
+                    return Err(syn::Error::new_spanned(
+                        pair.value,
+                        "expected string literal",
+                    ));
+                }
+            }
+
+            if key == "version" {
+                if let Expr::Lit(ExprLit {
+                    lit: Lit::Int(i), ..
+                }) = pair.value
+                {
+                    version = Some(i.base10_parse()?);
+                    continue;
+                } else {
+                    return Err(syn::Error::new_spanned(
+                        pair.value,
+                        "expected integer literal",
+                    ));
+                }
+            }
+
+            if key == "kind" {
+                if let Expr::Path(ref path) = pair.value
+                    && let Some(ident) = path.path.get_ident()
+                {
+                    kind = if ident == "default" {
+                        PluginKind::Default
+                    } else if ident == "resident" {
+                        PluginKind::Resident
+                    } else if ident == "oneshot" {
+                        PluginKind::Oneshot
+                    } else {
+                        return Err(syn::Error::new_spanned(
+                            ident,
+                            format!(
+                                "unknown kind `{ident}`, expected `default`, `resident`, or `oneshot`"
+                            ),
+                        ));
+                    };
+                    continue;
+                } else {
+                    return Err(syn::Error::new_spanned(
+                        &pair.value,
+                        "expected identifier: `default`, `resident`, or `oneshot`",
+                    ));
+                }
+            }
+
+            return Err(syn::Error::new_spanned(
+                &pair.path,
+                format!("unknown attribute `{key}`"),
+            ));
         }
 
         Ok(Self {
@@ -179,7 +155,6 @@ impl Parse for PluginArgs {
             comment,
             help,
             hotkey,
-            flags,
             version,
             kind,
         })
@@ -210,11 +185,6 @@ pub fn plugin(attr: TokenStream, item: TokenStream) -> TokenStream {
         PluginKind::Oneshot => PLUGIN_UNL,
     };
     let computed_flags = base_flags | kind_flag;
-
-    let flags_expr = match args.flags {
-        Some(f) => quote! { #computed_flags | (#f).bits() as i32 },
-        None => quote! { #computed_flags },
-    };
     let version = args.version.unwrap_or(900);
 
     let expanded = quote! {
@@ -224,19 +194,23 @@ pub fn plugin(attr: TokenStream, item: TokenStream) -> TokenStream {
             let mut idb = match idalib::IDB::current() {
                 Ok(idb) => idb,
                 Err(e) => {
-                    let _ = unsafe { idalib::ffi::ida::msg(&format!("[{}] `init` failed: {e}\n", #name)) };
+                    let _ = unsafe {
+                        idalib::ffi::ida::msg(&format!("[{}] plugin initialisation failed: {e}\n", #name))
+                    };
                     return ::std::ptr::null_mut();
                 }
             };
 
-            match <#self_ty as idalib::plugin::IDAPlugin>::init(&mut idb) {
+            let mut ida = idalib::IDA::new(&idb);
+
+            match <#self_ty as idalib::plugin::IDAPlugin>::init(&mut ida, &mut idb) {
                 Ok(plugin) => {
                     let wrapper = idalib::plugin::PlugmodWrapper::new(#name, plugin);
                     let plugmod = Box::new(idalib::ffi::plugin::PlugMod::new(wrapper));
                     unsafe { idalib::ffi::plugin::idalib_create_plugmod(plugmod) }
                 }
                 Err(e) => {
-                    let _ = unsafe { idalib::ffi::ida::msg(&format!("[{}] `init` failed: {e}\n", #name)) };
+                    ida.msg(&format!("[{}] plugin initialisation failed: {e}\n", #name)).ok();
                     ::std::ptr::null_mut()
                 }
             }
@@ -245,7 +219,7 @@ pub fn plugin(attr: TokenStream, item: TokenStream) -> TokenStream {
         #[unsafe(no_mangle)]
         pub static mut PLUGIN: idalib::ffi::plugin::plugin_t = idalib::ffi::plugin::plugin_t {
             version: #version,
-            flags: #flags_expr,
+            flags: #computed_flags,
             init: Some(__idalib_plugin_init),
             term: None,
             run: None,

@@ -1,5 +1,4 @@
-use idalib::ffi::ida::msg;
-use idalib::{IDAError, IDAPlugin, IDB, plugin};
+use idalib::{IDA, IDAError, IDAPlugin, IDB, plugin};
 
 struct BasicPlugin {
     run_count: usize,
@@ -13,19 +12,19 @@ struct BasicPlugin {
     kind = resident,
 )]
 impl IDAPlugin for BasicPlugin {
-    fn init(_idb: &mut IDB) -> Result<Self, IDAError> {
-        unsafe { msg("[basic-plugin] init\n").ok() };
+    fn init(ida: &mut IDA, _idb: &mut IDB) -> Result<Self, IDAError> {
+        ida.msg("[basic-plugin] init\n")?;
         Ok(BasicPlugin { run_count: 0 })
     }
 
-    fn run(&mut self, _idb: &mut IDB, _arg: usize) -> Result<(), IDAError> {
+    fn run(&mut self, ida: &mut IDA, _idb: &mut IDB, _arg: usize) -> Result<(), IDAError> {
         self.run_count += 1;
-        unsafe { msg(&format!("[basic-plugin] run (count: {})\n", self.run_count)).ok() };
+        ida.msg(&format!("[basic-plugin] run (count: {})\n", self.run_count))?;
         Ok(())
     }
 
-    fn term(&mut self, _idb: &mut IDB) -> Result<(), IDAError> {
-        unsafe { msg("[basic-plugin] term\n").ok() };
+    fn term(&mut self, ida: &mut IDA, _idb: &mut IDB) -> Result<(), IDAError> {
+        ida.msg("[basic-plugin] term\n")?;
         Ok(())
     }
 }
