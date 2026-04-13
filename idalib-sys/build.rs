@@ -26,15 +26,14 @@ fn configure_and_generate(builder: BindgenBuilder, ida: &Path, output: impl AsRe
 }
 
 fn main() {
-    // let sdk_path = PathBuf::from(env::var("IDASDKDIR").expect("IDASDKDIR should be set"));
     let sdk_path =
         PathBuf::from(env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR should be set"))
             .join("sdk/src");
     let ida = sdk_path.join("include");
 
-    cxx_build::CFG.exported_header_dirs.push(&ida);
-
     let ffi_path = Path::new("src");
+
+    cxx_build::CFG.exported_header_dirs.push(&ida);
 
     let mut builder = autocxx_build::Builder::new(ffi_path.join("lib.rs"), [ffi_path, &*ida])
         .extra_clang_args(
@@ -143,7 +142,12 @@ fn main() {
     }
 
     let hexrays = autocxx_bindgen::builder()
-        .header(ffi_path.join("fixups.h").to_str().expect("path is valid string"))
+        .header(
+            ffi_path
+                .join("fixups.h")
+                .to_str()
+                .expect("path is valid string"),
+        )
         .header(ida.join("pro.h").to_str().expect("path is valid string"))
         .header(
             ida.join("hexrays.hpp")
@@ -174,6 +178,18 @@ fn main() {
         .allowlist_item("DECOMP_.*");
 
     configure_and_generate(hexrays, &ida, "hexrays.rs");
+
+    let plugin = autocxx_bindgen::builder()
+        .header(ida.join("pro.h").to_str().expect("path is valid string"))
+        .header(
+            ida.join("loader.hpp")
+                .to_str()
+                .expect("path is valid string"),
+        )
+        .allowlist_item("plugmod_t")
+        .allowlist_item("plugin_t");
+
+    configure_and_generate(plugin, &ida, "plugin.rs");
 
     println!("cargo::metadata=sdk={}", sdk_path.display());
 

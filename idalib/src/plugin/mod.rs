@@ -2,10 +2,16 @@ use std::marker::PhantomData;
 
 use bitflags::bitflags;
 
-use crate::ffi::loader::*;
+use crate::ffi::plugin::*;
 use crate::idb::IDB;
 
 pub use crate::ffi::processor::ids as id;
+
+#[cfg(feature = "plugin")]
+mod plugmod;
+#[cfg(feature = "plugin")]
+pub use plugmod::*;
+
 
 bitflags! {
     #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -37,7 +43,7 @@ impl<'a> Plugin<'a> {
     }
 
     pub fn run(&self, arg: usize) -> bool {
-        unsafe { run_plugin(&*self.ptr, arg) }
+        unsafe { run_plugin(self.ptr, arg) }
     }
 
     pub fn version(&self) -> u64 {

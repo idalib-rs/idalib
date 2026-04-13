@@ -1,5 +1,5 @@
 [package]
-name = "idalib"
+name = "idalib-macros"
 authors = ["Sam L. Thomas <st@xv.ax>", "Yegor Vasilenko <yv@yegor.cc>", "Marco Ivaldi <raptor@0xdeadbeef.info>"]
 version = "0.9.0+9.3.260327"
 description = "Idiomatic bindings to IDA SDK"
@@ -9,22 +9,12 @@ homepage = "https://idalib.rs"
 keywords = ["reverse-engineering", "ida", "ida-pro", "idalib"]
 categories = ["security"]
 license = "MIT OR Apache-2.0"
-readme = "../README.md"
 edition = "2024"
-build = "build.rs"
 
-[features]
-plugin = ["dep:idalib-macros"]
-default = []
+[lib]
+proc-macro = true
 
 [dependencies]
-anyhow = "1"
-autocxx = "0.27"
-bitflags = "2"
-cxx = "1"
-idalib-macros = { version = "0.9", path = "../idalib-macros", optional = true }
-idalib-sys = { version = "0.9", path = "../idalib-sys" }
-thiserror = "1"
-
-[build-dependencies]
-idalib-build = { version = "0.9", path = "../idalib-build" }
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "2", features = ["full"] }

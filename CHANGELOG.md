@@ -1,10 +1,9 @@
 # Changelog
 
-## 0.9.0 (2026-04-06)
-
-Compatibility release for IDA 9.3sp1.
+## 0.9.0 (2026-04-14)
 
 Features:
+- Compatibility with IDA 9.3sp1.
 - Support for writing Rust-based plugins.
 
 ## 0.8.1 (2026-02-21)
