@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["auto_wait","close_database","close_database_with","enable_console_messages","init_library","is_license_valid","library_version","license_id","make_signatures","open_database","open_database_quiet","open_database_with","set_screen_ea"]};
+window.SIDEBAR_ITEMS = {"fn":["auto_wait","close_database","close_database_with","enable_console_messages","idalib_msg","init_library","is_license_valid","library_version","license_id","make_signatures","msg","open_database","open_database_quiet","open_database_with","set_screen_ea"]};

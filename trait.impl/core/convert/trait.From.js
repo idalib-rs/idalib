@@ -1,9 +1,9 @@
 (function() {
-    var implementors = Object.fromEntries([["idalib",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.93.0/core/convert/trait.From.html\" title=\"trait core::convert::From\">From</a>&lt;<a class=\"struct\" href=\"idalib/license/struct.LicenseId.html\" title=\"struct idalib::license::LicenseId\">LicenseId</a>&gt; for [<a class=\"primitive\" href=\"https://doc.rust-lang.org/1.93.0/std/primitive.u8.html\">u8</a>; <a class=\"primitive\" href=\"https://doc.rust-lang.org/1.93.0/std/primitive.array.html\">6</a>]"]]],["idalib_sys",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.93.0/core/convert/trait.From.html\" title=\"trait core::convert::From\">From</a>&lt;<a class=\"struct\" href=\"idalib_sys/hexrays/struct.HexRaysError.html\" title=\"struct idalib_sys::hexrays::HexRaysError\">HexRaysError</a>&gt; for <a class=\"enum\" href=\"idalib_sys/enum.IDAError.html\" title=\"enum idalib_sys::IDAError\">IDAError</a>"]]]]);
+    const implementors = Object.fromEntries([["idalib",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.94.1/core/convert/trait.From.html\" title=\"trait core::convert::From\">From</a>&lt;<a class=\"struct\" href=\"idalib/license/struct.LicenseId.html\" title=\"struct idalib::license::LicenseId\">LicenseId</a>&gt; for [<a class=\"primitive\" href=\"https://doc.rust-lang.org/1.94.1/std/primitive.u8.html\">u8</a>; <a class=\"primitive\" href=\"https://doc.rust-lang.org/1.94.1/std/primitive.array.html\">6</a>]",0]]],["idalib_sys",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.94.1/core/convert/trait.From.html\" title=\"trait core::convert::From\">From</a>&lt;<a class=\"struct\" href=\"idalib_sys/hexrays/struct.HexRaysError.html\" title=\"struct idalib_sys::hexrays::HexRaysError\">HexRaysError</a>&gt; for <a class=\"enum\" href=\"idalib_sys/enum.IDAError.html\" title=\"enum idalib_sys::IDAError\">IDAError</a>",0]]]]);
     if (window.register_implementors) {
         window.register_implementors(implementors);
     } else {
         window.pending_implementors = implementors;
     }
 })()
-//{"start":57,"fragment_lengths":[484,419]}
+//{"start":59,"fragment_lengths":[486,421]}
