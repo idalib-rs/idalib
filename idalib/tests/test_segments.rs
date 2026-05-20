@@ -1,7 +1,7 @@
 use tempdir::TempDir;
 
 use idalib::idb::IDB;
-use idalib::segment::{self, SegmentPermissions, SegmentType};
+use idalib::segment::{SegmentPermissions, SegmentType};
 #[path = "../src/tests.rs"]
 mod tests;
 
