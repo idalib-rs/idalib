@@ -89,6 +89,7 @@ pub mod plugin;
 pub mod processor;
 pub mod segment;
 pub mod strings;
+pub mod typeinf;
 pub mod xref;
 
 pub use idalib_sys as ffi;

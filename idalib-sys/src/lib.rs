@@ -739,6 +739,7 @@ mod ffix {
         include!("segm_extras.h");
         include!("search_extras.h");
         include!("strings_extras.h");
+        include!("typeinf_extras.h");
 
         type c_short = autocxx::c_short;
         type c_int = autocxx::c_int;
@@ -1042,6 +1043,8 @@ mod ffix {
             minor: *mut c_int,
             build: *mut c_int,
         ) -> bool;
+
+        unsafe fn idalib_print_decls(flags: u32) -> Result<String>;
     }
 }
 
@@ -1212,6 +1215,10 @@ pub mod search {
 pub mod strings {
     pub use super::ffi::{build_strlist, clear_strlist, get_strlist_qty};
     pub use super::ffix::{idalib_get_strlist_item_addr, idalib_get_strlist_item_length};
+}
+
+pub mod typeinf {
+    pub use super::ffix::idalib_print_decls;
 }
 
 pub mod loader {
