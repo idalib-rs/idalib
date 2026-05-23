@@ -357,6 +357,13 @@ include_cpp! {
     generate!("clear_strlist")
     generate!("get_strlist_qty")
 
+    // typeinf
+    generate!("PDF_INCL_DEPS")
+    generate!("PDF_DEF_FWD")
+    generate!("PDF_DEF_BASE")
+    generate!("PDF_HEADER_CMT")
+    generate!("PDF_NO_ANON_NAME")
+
     // loader
     generate!("plugin_t")
     generate!("find_plugin")
@@ -1044,7 +1051,7 @@ mod ffix {
             build: *mut c_int,
         ) -> bool;
 
-        unsafe fn idalib_print_decls(flags: u32) -> Result<String>;
+        unsafe fn idalib_format_decls(flags: u32) -> Result<String>;
     }
 }
 
@@ -1218,7 +1225,10 @@ pub mod strings {
 }
 
 pub mod typeinf {
-    pub use super::ffix::idalib_print_decls;
+    pub use super::ffi::{
+        PDF_DEF_BASE, PDF_DEF_FWD, PDF_HEADER_CMT, PDF_INCL_DEPS, PDF_NO_ANON_NAME,
+    };
+    pub use super::ffix::idalib_format_decls;
 }
 
 pub mod loader {

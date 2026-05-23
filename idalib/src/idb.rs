@@ -20,7 +20,7 @@ use crate::ffi::loader::find_plugin;
 use crate::ffi::processor::get_ph;
 use crate::ffi::search::{idalib_find_defined, idalib_find_imm, idalib_find_text};
 use crate::ffi::segment::{get_segm_by_name, get_segm_qty, getnseg, getseg};
-use crate::ffi::typeinf::idalib_print_decls;
+use crate::ffi::typeinf::idalib_format_decls;
 use crate::ffi::util::{is_align_insn, next_head, prev_head, str2reg};
 use crate::ffi::xref::{xrefblk_t, xrefblk_t_first_from, xrefblk_t_first_to};
 
@@ -34,7 +34,7 @@ use crate::plugin::Plugin;
 use crate::processor::Processor;
 use crate::segment::{Segment, SegmentId};
 use crate::strings::StringList;
-use crate::typeinf::PrintDeclsFlags;
+use crate::typeinf::FormatDeclsOptions;
 use crate::xref::{XRef, XRefQuery};
 use crate::{Address, AddressFlags, IDAError, IDARuntimeHandle, prepare_library};
 
@@ -166,9 +166,8 @@ impl IDB {
         make_signatures(only_pat)
     }
 
-    pub fn print_decls(&self, flags: PrintDeclsFlags) -> Result<String, IDAError> {
-        unsafe { idalib_print_decls(flags.bits()) }
-            .map_err(IDAError::ffi)
+    pub fn format_decls(&self, options: FormatDeclsOptions) -> Result<String, IDAError> {
+        unsafe { idalib_format_decls(options.bits()) }.map_err(IDAError::ffi)
     }
 
     pub fn decompiler_available(&self) -> bool {
