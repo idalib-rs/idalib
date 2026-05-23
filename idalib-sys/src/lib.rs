@@ -1052,6 +1052,12 @@ mod ffix {
         ) -> bool;
 
         unsafe fn idalib_format_decls(flags: u32) -> Result<String>;
+
+        unsafe fn idalib_format_func_type_info(
+            ea: c_ulonglong,
+            cfunc: *mut cfunc_t,
+            flags: u32,
+        ) -> Result<String>;
     }
 }
 
@@ -1228,7 +1234,7 @@ pub mod typeinf {
     pub use super::ffi::{
         PDF_DEF_BASE, PDF_DEF_FWD, PDF_HEADER_CMT, PDF_INCL_DEPS, PDF_NO_ANON_NAME,
     };
-    pub use super::ffix::idalib_format_decls;
+    pub use super::ffix::{idalib_format_decls, idalib_format_func_type_info};
 }
 
 pub mod loader {

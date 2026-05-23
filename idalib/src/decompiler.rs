@@ -67,6 +67,10 @@ impl<'a> CFunction<'a> {
         unsafe { idalib_hexrays_cfunc_pseudocode(self.ptr) }
     }
 
+    pub(crate) fn as_ptr(&self) -> *mut cfunc_t {
+        self.ptr
+    }
+
     fn as_cfunc(&self) -> &cfunc_t {
         unsafe { self.ptr.as_ref().expect("valid pointer") }
     }

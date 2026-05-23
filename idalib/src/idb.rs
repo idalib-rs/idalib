@@ -20,7 +20,7 @@ use crate::ffi::loader::find_plugin;
 use crate::ffi::processor::get_ph;
 use crate::ffi::search::{idalib_find_defined, idalib_find_imm, idalib_find_text};
 use crate::ffi::segment::{get_segm_by_name, get_segm_qty, getnseg, getseg};
-use crate::ffi::typeinf::idalib_format_decls;
+use crate::ffi::typeinf::{idalib_format_decls, idalib_format_func_type_info};
 use crate::ffi::util::{is_align_insn, next_head, prev_head, str2reg};
 use crate::ffi::xref::{xrefblk_t, xrefblk_t_first_from, xrefblk_t_first_to};
 
@@ -168,6 +168,37 @@ impl IDB {
 
     pub fn format_decls(&self, options: FormatDeclsOptions) -> Result<String, IDAError> {
         unsafe { idalib_format_decls(options.bits()) }.map_err(IDAError::ffi)
+    }
+
+    pub fn format_func_decls(
+        &self,
+        func: &Function<'_>,
+        options: FormatDeclsOptions,
+    ) -> Result<String, IDAError> {
+        unsafe {
+            idalib_format_func_type_info(
+                func.start_address().into(),
+                std::ptr::null_mut(),
+                options.bits(),
+            )
+        }
+        .map_err(IDAError::ffi)
+    }
+
+    pub fn format_func_decls_with<'a>(
+        &'a self,
+        func: &Function<'a>,
+        cfunc: &CFunction<'a>,
+        options: FormatDeclsOptions,
+    ) -> Result<String, IDAError> {
+        unsafe {
+            idalib_format_func_type_info(
+                func.start_address().into(),
+                cfunc.as_ptr(),
+                options.bits(),
+            )
+        }
+        .map_err(IDAError::ffi)
     }
 
     pub fn decompiler_available(&self) -> bool {
