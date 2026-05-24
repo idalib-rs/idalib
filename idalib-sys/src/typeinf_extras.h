@@ -52,9 +52,10 @@ static void collect_tinfo_ordinals(const tinfo_t &tif, std::set<uint32> &seen) {
   }
 }
 
-// Calls `print_decls()` with the current IDB's type library (`get_idati()`).
-// Returns the declarations as a string. Throws if `print_decls()` signals a
-// hard failure (return value == 0).
+// Call `print_decls()` with the current IDB's type library (`get_idati()`).
+// Return the declarations as a string.
+//
+// Throw if `print_decls()` signals a hard failure (return value == 0).
 rust::String idalib_format_decls(uint32 flags) {
   idalib_string_sink_t sink;
   int result = print_decls(sink, get_idati(), nullptr, flags);
@@ -67,6 +68,8 @@ rust::String idalib_format_decls(uint32 flags) {
 // Collect named-type ordinals used by a decompiled function's local variables
 // (arguments, return value, locals) and emit just those types plus their
 // transitive dependencies (via `PDF_INCL_DEPS`).
+//
+// Throw if `print_decls()` signals a hard failure (return value == 0).
 rust::String idalib_format_cfunc_decls(cfunc_t *cfunc, uint32 flags) {
   std::set<uint32> seen;
 
