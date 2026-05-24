@@ -17,7 +17,7 @@ struct idalib_string_sink_t : text_sink_t {
 };
 
 // Recursively collect named-type ordinals reachable from `tif` into `seen`.
-// Stops at typeref boundaries: print_decls(PDF_INCL_DEPS) handles the
+// Stops at typeref boundaries: `print_decls(PDF_INCL_DEPS)` handles the
 // transitive closure from those seeds, so we only need the direct references.
 static void collect_tinfo_ordinals(const tinfo_t &tif, std::set<uint32> &seen) {
   if (!tif.is_correct()) return;
@@ -66,10 +66,12 @@ rust::String idalib_format_decls(uint32 flags) {
 
 // Collect named-type ordinals used by a decompiled function's local variables
 // (arguments, return value, locals) and emit just those types plus their
-// transitive dependencies (via PDF_INCL_DEPS).
+// transitive dependencies (via `PDF_INCL_DEPS`).
 rust::String idalib_format_cfunc_decls(cfunc_t *cfunc, uint32 flags) {
   std::set<uint32> seen;
 
+  // `lvars_t` should covers everything: arguments (`CVAR_ARG`), the return value
+  // (`CVAR_RESULT`), and all locals.
   lvars_t *lvars = cfunc->get_lvars();
   if (lvars != nullptr) {
     for (const auto &lv : *lvars)
