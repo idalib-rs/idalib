@@ -16,6 +16,19 @@ struct idalib_string_sink_t : text_sink_t {
   }
 };
 
+// Call `print_decls()` with the current IDB's type library (`get_idati()`).
+// Return the declarations as a string.
+//
+// Throw if `print_decls()` signals a hard failure (return value == 0).
+rust::String idalib_format_decls(uint32 flags) {
+  idalib_string_sink_t sink;
+  int result = print_decls(sink, get_idati(), nullptr, flags);
+  if (result == 0) {
+    throw std::runtime_error("print_decls failed");
+  }
+  return rust::String(sink.buf.str());
+}
+
 // Recursively collect named-type ordinals reachable from `tif` into `seen`.
 // Stops at typeref boundaries: `print_decls(PDF_INCL_DEPS)` handles the
 // transitive closure from those seeds, so we only need the direct references.
@@ -50,19 +63,6 @@ static void collect_tinfo_ordinals(const tinfo_t &tif, std::set<uint32> &seen) {
         collect_tinfo_ordinals(arg.type, seen);
     }
   }
-}
-
-// Call `print_decls()` with the current IDB's type library (`get_idati()`).
-// Return the declarations as a string.
-//
-// Throw if `print_decls()` signals a hard failure (return value == 0).
-rust::String idalib_format_decls(uint32 flags) {
-  idalib_string_sink_t sink;
-  int result = print_decls(sink, get_idati(), nullptr, flags);
-  if (result == 0) {
-    throw std::runtime_error("print_decls failed");
-  }
-  return rust::String(sink.buf.str());
 }
 
 // Collect named-type ordinals used by a decompiled function's local variables
