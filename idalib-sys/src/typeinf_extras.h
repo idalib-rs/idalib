@@ -73,7 +73,7 @@ static void collect_tinfo_ordinals(const tinfo_t &tif, std::set<uint32> &seen) {
 rust::String idalib_format_cfunc_decls(cfunc_t *cfunc, uint32 flags) {
   std::set<uint32> seen;
 
-  // `lvars_t` should covers everything: arguments (`CVAR_ARG`), the return value
+  // `lvars_t` should cover everything: arguments (`CVAR_ARG`), the return value
   // (`CVAR_RESULT`), and all locals.
   lvars_t *lvars = cfunc->get_lvars();
   if (lvars != nullptr) {
