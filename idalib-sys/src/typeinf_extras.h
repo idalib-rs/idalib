@@ -1,7 +1,6 @@
 #pragma once
 
 #include "hexrays.hpp"
-#include "nalt.hpp"
 #include "typeinf.hpp"
 #include "pro.h"
 #include "cxx.h"
@@ -65,31 +64,26 @@ rust::String idalib_format_decls(uint32 flags) {
   return rust::String(sink.buf.str());
 }
 
-// Collect type ordinals for a function at `ea` from its prototype and
-// (if non-null) its decompiled local variables, then emit just those types
-// (and their transitive dependencies, via PDF_INCL_DEPS).
-rust::String idalib_format_func_type_info(
-    unsigned long long ea, cfunc_t *cfunc, uint32 flags) {
+// Collect named-type ordinals used by a decompiled function's local variables
+// (arguments, return value, locals) and emit just those types plus their
+// transitive dependencies (via PDF_INCL_DEPS).
+rust::String idalib_format_func_type_info(cfunc_t *cfunc, uint32 flags) {
   std::set<uint32> seen;
 
-  tinfo_t tif;
-  if (get_tinfo(&tif, (ea_t)ea))
-    collect_tinfo_ordinals(tif, seen);
-
-  if (cfunc != nullptr) {
-    lvars_t *lvars = cfunc->get_lvars();
-    if (lvars != nullptr) {
-      for (const auto &lv : *lvars)
-        collect_tinfo_ordinals(lv.tif, seen);
-    }
+  lvars_t *lvars = cfunc->get_lvars();
+  if (lvars != nullptr) {
+    for (const auto &lv : *lvars)
+      collect_tinfo_ordinals(lv.tif, seen);
   }
+
+  if (seen.empty())
+    return rust::String();
 
   ordvec_t ordinals;
   for (uint32 ord : seen) ordinals.push_back(ord);
 
   idalib_string_sink_t sink;
-  const ordvec_t *ordp = ordinals.empty() ? nullptr : &ordinals;
-  int result = print_decls(sink, get_idati(), ordp, flags);
+  int result = print_decls(sink, get_idati(), &ordinals, flags);
   if (result == 0) {
     throw std::runtime_error("print_decls failed");
   }

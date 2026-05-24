@@ -1054,7 +1054,6 @@ mod ffix {
         unsafe fn idalib_format_decls(flags: u32) -> Result<String>;
 
         unsafe fn idalib_format_func_type_info(
-            ea: c_ulonglong,
             cfunc: *mut cfunc_t,
             flags: u32,
         ) -> Result<String>;

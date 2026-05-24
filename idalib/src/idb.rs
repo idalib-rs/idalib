@@ -170,35 +170,13 @@ impl IDB {
         unsafe { idalib_format_decls(options.bits()) }.map_err(IDAError::ffi)
     }
 
-    pub fn format_func_decls(
-        &self,
-        func: &Function<'_>,
-        options: FormatDeclsOptions,
-    ) -> Result<String, IDAError> {
-        unsafe {
-            idalib_format_func_type_info(
-                func.start_address().into(),
-                std::ptr::null_mut(),
-                options.bits(),
-            )
-        }
-        .map_err(IDAError::ffi)
-    }
-
     pub fn format_func_decls_with<'a>(
         &'a self,
-        func: &Function<'a>,
         cfunc: &CFunction<'a>,
         options: FormatDeclsOptions,
     ) -> Result<String, IDAError> {
-        unsafe {
-            idalib_format_func_type_info(
-                func.start_address().into(),
-                cfunc.as_ptr(),
-                options.bits(),
-            )
-        }
-        .map_err(IDAError::ffi)
+        unsafe { idalib_format_func_type_info(cfunc.as_ptr(), options.bits()) }
+            .map_err(IDAError::ffi)
     }
 
     pub fn decompiler_available(&self) -> bool {
