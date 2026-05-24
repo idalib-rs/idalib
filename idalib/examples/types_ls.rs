@@ -1,13 +1,10 @@
 use idalib::idb::IDB;
-use idalib::typeinf::FormatDeclsOptions;
 
 fn main() -> anyhow::Result<()> {
     let idb = IDB::open("./tests/ls")?;
 
-    let opts = FormatDeclsOptions::INCL_DEPS | FormatDeclsOptions::DEF_FWD;
-
     // All types in the database.
-    let all = idb.format_decls(opts)?;
+    let all = idb.format_decls()?;
     println!("=== all types ===\n{all}");
 
     // Types for each decompiled function.
@@ -16,7 +13,7 @@ fn main() -> anyhow::Result<()> {
             let name = func.name().unwrap_or_default();
 
             if let Ok(cfunc) = idb.decompile(&func) {
-                let types = idb.format_cfunc_decls(&cfunc, opts)?;
+                let types = idb.format_cfunc_decls(&cfunc)?;
                 println!("=== types for {name} ===\n{types}");
             }
         }

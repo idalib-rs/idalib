@@ -3,12 +3,13 @@ use bitflags::bitflags;
 use crate::ffi::typeinf::*;
 
 bitflags! {
-    /// Flags controlling how type declarations are extracted by [`IDB::format_decls`] and [`IDB::format_cfunc_decls`].
+    /// Flags controlling how type declarations are extracted by [`IDB::format_decls_with`] and
+    /// [`IDB::format_cfunc_decls_with`].
     ///
     /// These correspond to the `PDF_*` constants in the IDA SDK's `typeinf.hpp`.
     ///
-    /// [`IDB::format_decls`]: crate::idb::IDB::format_decls
-    /// [`IDB::format_cfunc_decls`]: crate::idb::IDB::format_cfunc_decls
+    /// [`IDB::format_decls`]: crate::idb::IDB::format_decls_with
+    /// [`IDB::format_cfunc_decls`]: crate::idb::IDB::format_cfunc_decls_with
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct FormatDeclsOptions: u32 {
         /// Include all type dependencies.
