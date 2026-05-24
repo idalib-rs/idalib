@@ -1053,7 +1053,7 @@ mod ffix {
 
         unsafe fn idalib_format_decls(flags: u32) -> Result<String>;
 
-        unsafe fn idalib_format_func_decls(cfunc: *mut cfunc_t, flags: u32) -> Result<String>;
+        unsafe fn idalib_format_cfunc_decls(cfunc: *mut cfunc_t, flags: u32) -> Result<String>;
     }
 }
 
@@ -1080,7 +1080,6 @@ pub mod insn {
 
     use super::ea_t;
     use super::ffi::decode_insn;
-
     pub use super::pod::insn_t;
 
     pub fn decode(ea: ea_t) -> Option<insn_t> {
@@ -1159,7 +1158,6 @@ pub mod processor {
     pub use super::ffix::{
         idalib_is_thumb_at, idalib_ph_id, idalib_ph_long_name, idalib_ph_short_name,
     };
-
     pub use super::idp as ids;
 }
 
@@ -1172,7 +1170,6 @@ pub mod segment {
         saRel512Bytes, saRel1024Bytes, saRel2048Bytes, saRelByte, saRelDble, saRelPage, saRelPara,
         saRelQword, saRelWord, segment_t,
     };
-
     pub use super::ffix::{
         idalib_segm_align, idalib_segm_bitness, idalib_segm_bytes, idalib_segm_name,
         idalib_segm_perm, idalib_segm_type,
@@ -1230,7 +1227,7 @@ pub mod typeinf {
     pub use super::ffi::{
         PDF_DEF_BASE, PDF_DEF_FWD, PDF_HEADER_CMT, PDF_INCL_DEPS, PDF_NO_ANON_NAME,
     };
-    pub use super::ffix::{idalib_format_decls, idalib_format_func_decls};
+    pub use super::ffix::{idalib_format_cfunc_decls, idalib_format_decls};
 }
 
 pub mod loader {
@@ -1260,17 +1257,15 @@ pub mod name {
 }
 
 pub mod ida {
-    use std::env;
     use std::ffi::CString;
     use std::path::Path;
-    use std::ptr;
+    use std::{env, ptr};
 
     use autocxx::prelude::*;
+    pub use ffi::auto_wait;
 
     use super::platform::is_main_thread;
     use super::{IDAError, ea_t, ffi, ffix};
-
-    pub use ffi::auto_wait;
 
     pub fn is_license_valid() -> bool {
         assert!(

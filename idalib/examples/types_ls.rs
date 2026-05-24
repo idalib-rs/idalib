@@ -16,7 +16,7 @@ fn main() -> anyhow::Result<()> {
             let name = func.name().unwrap_or_default();
 
             if let Ok(cfunc) = idb.decompile(&func) {
-                let types = idb.format_func_decls(&cfunc, opts)?;
+                let types = idb.format_cfunc_decls(&cfunc, opts)?;
                 println!("=== types for {name} ===\n{types}");
             }
         }
