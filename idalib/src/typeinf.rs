@@ -8,8 +8,8 @@ bitflags! {
     ///
     /// These correspond to the `PDF_*` constants in the IDA SDK's `typeinf.hpp`.
     ///
-    /// [`IDB::format_decls`]: crate::idb::IDB::format_decls_with
-    /// [`IDB::format_cfunc_decls`]: crate::idb::IDB::format_cfunc_decls_with
+    /// [`IDB::format_decls_with`]: crate::idb::IDB::format_decls_with
+    /// [`IDB::format_cfunc_decls_with`]: crate::idb::IDB::format_cfunc_decls_with
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct FormatDeclsOptions: u32 {
         /// Include all type dependencies.
