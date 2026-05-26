@@ -113,7 +113,7 @@ fn default_install_candidates() -> Vec<PathBuf> {
     } else if cfg!(target_os = "windows") {
         vec![
             PathBuf::from(r"C:\Program Files\IDA Professional 9.3"),
-            PathBuf::from(r"C:\Program Files\IDA Home 9.3"),
+            PathBuf::from(r"C:\Program Files\IDA Home (PC) 9.3"),
         ]
     } else {
         panic!("unsupported platform");
