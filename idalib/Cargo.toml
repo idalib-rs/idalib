@@ -14,7 +14,7 @@ edition = "2024"
 build = "build.rs"
 
 [features]
-plugin = ["dep:idalib-macros"]
+plugin = ["dep:idalib-macros", "idalib-build/plugin"]
 default = []
 
 [dependencies]

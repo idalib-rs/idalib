@@ -11,4 +11,4 @@ crate-type = ["cdylib"]
 idalib = { version = "0.9", path = "../../idalib", features = ["plugin"] }
 
 [build-dependencies]
-idalib-build = { version = "0.9", path = "../../idalib-build" }
+idalib-build = { version = "0.9", path = "../../idalib-build", features = ["plugin"] }

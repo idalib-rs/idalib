@@ -1,10 +1,10 @@
-use idalib::{IDA, IDAError, IDAPlugin, IDB, plugin};
+use idalib::{IDA, IDAError, IDAPlugin, IDB};
 
 struct BasicPlugin {
     run_count: usize,
 }
 
-#[plugin(
+#[idalib::plugin(
     name = "basic plugin",
     comment = "this is a basic plugin written in Rust",
     help = "this plugin does nothing useful",
