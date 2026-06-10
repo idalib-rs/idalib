@@ -79,6 +79,7 @@ use std::sync::{Mutex, MutexGuard, OnceLock};
 
 pub mod bookmarks;
 pub mod decompiler;
+pub mod entry;
 pub mod func;
 pub mod idb;
 pub mod import;

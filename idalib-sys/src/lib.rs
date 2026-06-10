@@ -1191,6 +1191,36 @@ pub const fn from_ea(v: ea_t) -> u64 {
 pub mod entry {
     pub use super::ffi::{get_entry, get_entry_ordinal, get_entry_qty, uval_t};
     pub use super::ffix::{idalib_entry_forwarder, idalib_entry_name};
+
+    /// Returns the number of entry points (exports) in the database.
+    pub fn entry_qty() -> usize {
+        unsafe { get_entry_qty() }
+    }
+
+    /// Returns the ordinal of the entry point at the given index.
+    pub fn entry_ordinal(idx: usize) -> u64 {
+        unsafe { get_entry_ordinal(idx) }.0
+    }
+
+    /// Returns the address of the entry point with the given ordinal.
+    ///
+    /// Returns [`crate::BADADDR`] if no such entry point exists.
+    pub fn entry_address(ord: u64) -> u64 {
+        let ea = unsafe { get_entry(crate::c_ulonglong(ord)) };
+        crate::from_ea(ea)
+    }
+
+    /// Returns the name of the entry point with the given ordinal, if set.
+    pub fn entry_name(ord: u64) -> Option<String> {
+        let s = unsafe { idalib_entry_name(crate::c_ulonglong(ord)) }.ok()?;
+        if s.is_empty() { None } else { Some(s) }
+    }
+
+    /// Returns the forwarder string of the entry point with the given ordinal, if forwarded.
+    pub fn entry_forwarder(ord: u64) -> Option<String> {
+        let s = unsafe { idalib_entry_forwarder(crate::c_ulonglong(ord)) }.ok()?;
+        if s.is_empty() { None } else { Some(s) }
+    }
 }
 
 pub mod insn {
