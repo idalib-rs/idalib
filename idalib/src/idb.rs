@@ -769,6 +769,15 @@ impl IDB {
         }
     }
 
+    pub fn get_strlit_contents(&self, ea: Address, strtype: crate::strings::StringType) -> Option<String> {
+        let contents = unsafe { idalib_get_strlit_contents(ea.into(), usize::MAX, strtype.into()) };
+        if contents.is_empty() {
+            None
+        } else {
+            Some(contents)
+        }
+    }
+
     pub fn get_name(&self, ea: Address) -> Option<String> {
         let name = unsafe { idalib_get_ea_name(ea.into()) };
         if name.is_empty() { None } else { Some(name) }

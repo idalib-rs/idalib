@@ -1,6 +1,7 @@
 use tempdir::TempDir;
 
 use idalib::idb::IDB;
+use idalib::StringType;
 #[path = "../src/tests.rs"]
 mod tests;
 
@@ -8,14 +9,18 @@ mod tests;
 // .data:10026038 Name            db 'SADFHUHF',0         ; DATA XREF: DllMain(x,x,x)+38↑o
 // .data:10026038                                         ; DllMain(x,x,x)+57↑o
 
-fn test_get_strings() {
+fn open_pma01() -> (TempDir, IDB) {
     const FILENAME: &str = "Practical Malware Analysis Lab 01-01.dll_";
     let dir = TempDir::new("idalib-rs-tests").unwrap();
     let dst = dir.path().join(FILENAME);
     let src = tests::get_test_file_path(FILENAME);
     std::fs::copy(&src, &dst).unwrap();
-
     let idb = IDB::open(dst).unwrap();
+    (dir, idb)
+}
+
+fn test_get_strings() {
+    let (_dir, idb) = open_pma01();
 
     assert!(idb.is_loaded(0x10026038));
     assert!(idb.is_mapped(0x10026038));
@@ -48,6 +53,23 @@ fn test_get_strings() {
     );
 }
 
+fn test_get_strlit_contents() {
+    let (_dir, idb) = open_pma01();
+
+    let ascii = idb.get_strlit_contents(0x10026038, StringType::C);
+    assert_eq!(ascii.as_deref(), Some("SADFHUHF"));
+
+    let not_utf16 = idb.get_strlit_contents(0x10026038, StringType::C16);
+    assert!(
+        not_utf16.is_none() || not_utf16.as_deref() != Some("SADFHUHF"),
+        "C16 should not decode an ASCII-only string the same way"
+    );
+
+    let not_a_string = idb.get_strlit_contents(0x10001010, StringType::C);
+    assert!(not_a_string.is_none(), "code address should not be a string");
+}
+
 fn main() {
     test_get_strings();
+    test_get_strlit_contents();
 }

@@ -104,6 +104,7 @@ pub use idb::IDB;
 #[cfg(not(feature = "plugin"))]
 pub use idb::IDBOpenOptions;
 pub use license::{LicenseId, is_valid_license, license_id};
+pub use strings::StringType;
 #[cfg(feature = "plugin")]
 pub use plugin::{IDAPlugin, PluginFlags};
 
