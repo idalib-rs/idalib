@@ -60,7 +60,7 @@ struct license_manager_t_vtbl {
   int (*get_or_borrow_license)(license_manager_t *, void *, license_info_t *,
                                uint64_t, qstring *);
   void *(*get_license_location)(license_manager_t *);
-  void *_skip_b[5];
+  void *_skip_b[6];
   license_result_t *(*check)(license_manager_t *, bool *, int);
 };
 
