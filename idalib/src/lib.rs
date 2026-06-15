@@ -10,10 +10,10 @@
 //!
 //! ```toml
 //! [dependencies]
-//! idalib = "0.8"
+//! idalib = "0.9"
 //!
 //! [build-dependencies]
-//! idalib-build = "0.8"
+//! idalib-build = "0.9"
 //! ```
 //!
 //! Here is a basic example of a `build.rs` file:
@@ -94,8 +94,15 @@ pub mod xref;
 pub use idalib_sys as ffi;
 
 pub use ffi::IDAError;
-pub use idb::{IDB, IDBOpenOptions};
+pub use idb::IDB;
+#[cfg(not(feature = "plugin"))]
+pub use idb::IDBOpenOptions;
 pub use license::{LicenseId, is_valid_license, license_id};
+#[cfg(feature = "plugin")]
+pub use plugin::{IDAPlugin, PluginFlags};
+
+#[cfg(feature = "plugin")]
+pub use idalib_macros::plugin;
 
 pub type Address = u64;
 pub struct AddressFlags<'a> {
@@ -117,6 +124,20 @@ impl<'a> AddressFlags<'a> {
 
     pub fn is_data(&self) -> bool {
         unsafe { ffi::bytes::is_data(self.flags) }
+    }
+}
+
+pub struct IDA;
+
+impl IDA {
+    pub fn new(_: &IDB) -> Self {
+        // NOTE: we take the IDB as an argument to ensure that the caller has access to it,
+        // therefore ensuring the library is correctly initialised.
+        Self
+    }
+
+    pub fn msg(&self, message: impl AsRef<str>) -> Result<(), IDAError> {
+        unsafe { ffi::ida::msg(message) }
     }
 }
 
@@ -143,13 +164,14 @@ impl IDAVersion {
 
 static INIT: OnceLock<Mutex<()>> = OnceLock::new();
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(not(any(target_os = "windows", feature = "plugin")))]
 unsafe extern "C" {
     static mut batch: std::ffi::c_char;
 }
 
 pub(crate) type IDARuntimeHandle = MutexGuard<'static, ()>;
 
+#[cfg(not(feature = "plugin"))]
 pub fn force_batch_mode() {
     #[cfg(not(target_os = "windows"))]
     unsafe {
@@ -157,6 +179,12 @@ pub fn force_batch_mode() {
     }
 }
 
+#[cfg(feature = "plugin")]
+pub fn init_library() -> &'static Mutex<()> {
+    INIT.get_or_init(|| Mutex::new(()))
+}
+
+#[cfg(not(feature = "plugin"))]
 pub fn init_library() -> &'static Mutex<()> {
     INIT.get_or_init(|| {
         force_batch_mode();
@@ -170,6 +198,7 @@ pub(crate) fn prepare_library() -> IDARuntimeHandle {
     mutex.lock().unwrap()
 }
 
+#[cfg(not(feature = "plugin"))]
 pub fn enable_console_messages(enabled: bool) {
     init_library();
     ffi::ida::enable_console_messages(enabled);

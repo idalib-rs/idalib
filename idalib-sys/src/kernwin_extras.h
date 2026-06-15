@@ -172,3 +172,9 @@ rust::String idalib_ea2str(ea_t ea) {
     return rust::String();
   }
 }
+
+void idalib_msg(const char *m) {
+  if (m && *m) {
+    msg("%s", m);
+  }
+}

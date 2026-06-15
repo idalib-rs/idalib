@@ -1,0 +1,14 @@
+[package]
+name = "basic-plugin"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "basic_plugin"
+crate-type = ["cdylib"]
+
+[dependencies]
+idalib = { version = "0.9", path = "../../idalib", features = ["plugin"] }
+
+[build-dependencies]
+idalib-build = { version = "0.9", path = "../../idalib-build" }

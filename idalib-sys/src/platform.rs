@@ -7,7 +7,7 @@ pub fn is_main_thread() -> bool {
 
 #[cfg(target_os = "macos")]
 pub fn is_main_thread() -> bool {
-    use objc::*;
+    use objc2::*;
 
     #[allow(unexpected_cfgs)]
     unsafe { msg_send![class!(NSThread), isMainThread] }

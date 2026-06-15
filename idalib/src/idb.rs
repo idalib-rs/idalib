@@ -1,6 +1,7 @@
 use std::ffi::CString;
 use std::marker::PhantomData;
 use std::mem::MaybeUninit;
+#[cfg(not(feature = "plugin"))]
 use std::path::{Path, PathBuf};
 
 use crate::ffi::BADADDR;
@@ -11,12 +12,14 @@ use crate::ffi::entry::{get_entry, get_entry_ordinal, get_entry_qty};
 use crate::ffi::func::{
     get_func, get_func_qty, getn_func, idalib_get_func_cmt, idalib_set_func_cmt,
 };
-use crate::ffi::hexrays::{decompile_func, init_hexrays_plugin, term_hexrays_plugin};
-use crate::ffi::ida::{
-    auto_wait, close_database_with, make_signatures, open_database_quiet, set_screen_ea,
-};
+#[cfg(not(feature = "plugin"))]
+use crate::ffi::hexrays::term_hexrays_plugin;
+use crate::ffi::hexrays::{decompile_func, init_hexrays_plugin};
+#[cfg(not(feature = "plugin"))]
+use crate::ffi::ida::{auto_wait, close_database_with, open_database_quiet};
+use crate::ffi::ida::{make_signatures, set_screen_ea};
 use crate::ffi::insn::decode;
-use crate::ffi::loader::find_plugin;
+use crate::ffi::plugin::find_plugin;
 use crate::ffi::processor::get_ph;
 use crate::ffi::search::{idalib_find_defined, idalib_find_imm, idalib_find_text};
 use crate::ffi::segment::{get_segm_by_name, get_segm_qty, getnseg, getseg};
@@ -37,7 +40,9 @@ use crate::xref::{XRef, XRefQuery};
 use crate::{Address, AddressFlags, IDAError, IDARuntimeHandle, prepare_library};
 
 pub struct IDB {
+    #[cfg(not(feature = "plugin"))]
     path: PathBuf,
+    #[cfg(not(feature = "plugin"))]
     save: bool,
     decompiler: bool,
     _guard: IDARuntimeHandle,
@@ -45,6 +50,7 @@ pub struct IDB {
 }
 
 #[derive(Debug, Clone)]
+#[cfg(not(feature = "plugin"))]
 pub struct IDBOpenOptions {
     idb: Option<PathBuf>,
     ftype: Option<String>,
@@ -53,6 +59,7 @@ pub struct IDBOpenOptions {
     auto_analyse: bool,
 }
 
+#[cfg(not(feature = "plugin"))]
 impl Default for IDBOpenOptions {
     fn default() -> Self {
         Self {
@@ -64,6 +71,7 @@ impl Default for IDBOpenOptions {
     }
 }
 
+#[cfg(not(feature = "plugin"))]
 impl IDBOpenOptions {
     pub fn new() -> Self {
         Self::default()
@@ -106,10 +114,12 @@ impl IDBOpenOptions {
 }
 
 impl IDB {
+    #[cfg(not(feature = "plugin"))]
     pub fn open(path: impl AsRef<Path>) -> Result<Self, IDAError> {
         Self::open_with(path, true, false)
     }
 
+    #[cfg(not(feature = "plugin"))]
     pub fn open_with(
         path: impl AsRef<Path>,
         auto_analyse: bool,
@@ -118,6 +128,7 @@ impl IDB {
         Self::open_full_with(path, auto_analyse, save, &[] as &[&str])
     }
 
+    #[cfg(not(feature = "plugin"))]
     fn open_full_with(
         path: impl AsRef<Path>,
         auto_analyse: bool,
@@ -144,14 +155,28 @@ impl IDB {
         })
     }
 
+    #[cfg(feature = "plugin")]
+    pub fn current() -> Result<Self, IDAError> {
+        let _guard = prepare_library();
+
+        Ok(Self {
+            decompiler: unsafe { init_hexrays_plugin(0.into()) },
+            _guard,
+            _marker: PhantomData,
+        })
+    }
+
+    #[cfg(not(feature = "plugin"))]
     pub fn path(&self) -> &Path {
         &self.path
     }
 
+    #[cfg(not(feature = "plugin"))]
     pub fn save_on_close(&mut self, status: bool) {
         self.save = status;
     }
 
+    #[cfg(not(feature = "plugin"))]
     pub fn auto_wait(&mut self) -> bool {
         unsafe { auto_wait() }
     }
@@ -572,7 +597,7 @@ impl IDB {
                 name.as_ref()
             )))
         } else {
-            Ok(Plugin::from_ptr(ptr))
+            Ok(Plugin::from_ptr(ptr as *const _))
         }
     }
 
@@ -581,6 +606,7 @@ impl IDB {
     }
 }
 
+#[cfg(not(feature = "plugin"))]
 impl Drop for IDB {
     fn drop(&mut self) {
         if self.decompiler {
