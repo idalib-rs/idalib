@@ -86,3 +86,8 @@ harness = false
 name = "test_open_options"
 path = "tests/test_open_options.rs"
 harness = false
+
+[[test]]
+name = "test_segpref"
+path = "tests/test_segpref.rs"
+harness = false

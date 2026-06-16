@@ -304,6 +304,49 @@ impl IDB {
         Some(Insn::from_repr(insn))
     }
 
+    /// Interpret an instruction's [`Insn::segpref`] value based on the current
+    /// processor family.
+    ///
+    /// Returns `None` when the raw value is zero (no override) or unrecognized
+    /// for the active processor, or when the processor doesn't use `segpref`.
+    pub fn segpref(&self, insn: &Insn) -> Option<crate::insn::segpref::SegPref> {
+        use crate::insn::segpref::*;
+
+        let raw = insn.segpref();
+        if raw == 0 {
+            return None;
+        }
+
+        let family = self.processor().family();
+        if family.is_386() {
+            MetapcSegment::from_raw(raw)
+                .map(|segment| SegPref::Metapc { segment })
+        } else if family.is_68k() {
+            Mc68kOperandSize::from_raw(raw)
+                .map(|operand_size| SegPref::Mc68k {
+                    operand_size,
+                    hide_suffix: raw & -128 != 0,
+                })
+        } else if family.is_mips() {
+            MipsFpuFormat::from_raw(raw)
+                .map(|fpu_format| SegPref::Mips { fpu_format })
+        } else if family.is_sparc() {
+            SparcConditionCode::from_raw(raw)
+                .map(|condition| SegPref::Sparc { condition })
+        } else if family.is_spc700() {
+            Some(SegPref::Spc700 { indirect: true })
+        } else if family.is_6800() || family.is_mc6812() || family.is_mc6816() {
+            Mc68xxSuffix::from_raw(raw)
+                .map(|suffix| SegPref::Mc68xx { suffix })
+        } else if family.is_c166() {
+            Some(SegPref::C166 { repeat_count: raw as u8 })
+        } else if family.is_trimedia() {
+            Some(SegPref::Trimedia { slot: raw as u8 })
+        } else {
+            None
+        }
+    }
+
     pub fn decompile<'a>(&'a self, f: &Function<'a>) -> Result<CFunction<'a>, IDAError> {
         self.decompile_with(f, false)
     }

@@ -143,6 +143,205 @@ pub enum AddressingMode {
     Sib = 1,
 }
 
+pub mod segpref {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub enum SegPref {
+        Metapc { segment: MetapcSegment },
+        Mc68k { operand_size: Mc68kOperandSize, hide_suffix: bool },
+        Mips { fpu_format: MipsFpuFormat },
+        Sparc { condition: SparcConditionCode },
+        Spc700 { indirect: bool },
+        Mc68xx { suffix: Mc68xxSuffix },
+        C166 { repeat_count: u8 },
+        Trimedia { slot: u8 },
+    }
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub enum MetapcSegment {
+        Es,
+        Cs,
+        Ss,
+        Ds,
+        Fs,
+        Gs,
+    }
+
+    impl MetapcSegment {
+        pub fn from_raw(val: i8) -> Option<Self> {
+            match val {
+                29 => Some(Self::Es),
+                30 => Some(Self::Cs),
+                31 => Some(Self::Ss),
+                32 => Some(Self::Ds),
+                33 => Some(Self::Fs),
+                34 => Some(Self::Gs),
+                _ => None,
+            }
+        }
+    }
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub enum Mc68kOperandSize {
+        Byte,
+        Word,
+        Long,
+        Single,
+        Double,
+        Extended,
+    }
+
+    impl Mc68kOperandSize {
+        pub fn from_raw(val: i8) -> Option<Self> {
+            match val & 0x7F {
+                1 => Some(Self::Byte),
+                2 => Some(Self::Word),
+                3 => Some(Self::Long),
+                4 => Some(Self::Single),
+                5 => Some(Self::Double),
+                6 => Some(Self::Extended),
+                _ => None,
+            }
+        }
+
+        pub fn suffix(&self) -> &'static str {
+            match self {
+                Self::Byte => ".b",
+                Self::Word => ".w",
+                Self::Long => ".l",
+                Self::Single => ".s",
+                Self::Double => ".d",
+                Self::Extended => ".x",
+            }
+        }
+    }
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub enum MipsFpuFormat {
+        Single,
+        Double,
+        Word,
+        Long,
+        PairedSingle,
+        Triple,
+        Quad,
+    }
+
+    impl MipsFpuFormat {
+        pub fn from_raw(val: i8) -> Option<Self> {
+            match val as u8 {
+                b's' => Some(Self::Single),
+                b'd' => Some(Self::Double),
+                b'w' => Some(Self::Word),
+                b'l' => Some(Self::Long),
+                b'p' => Some(Self::PairedSingle),
+                b't' => Some(Self::Triple),
+                b'q' => Some(Self::Quad),
+                _ => None,
+            }
+        }
+
+        pub fn suffix(&self) -> &'static str {
+            match self {
+                Self::Single => ".s",
+                Self::Double => ".d",
+                Self::Word => ".w",
+                Self::Long => ".l",
+                Self::PairedSingle => ".p",
+                Self::Triple => ".t",
+                Self::Quad => ".q",
+            }
+        }
+    }
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub enum SparcConditionCode {
+        Never,
+        Equal,
+        LessOrEqual,
+        Less,
+        LessOrEqualUnsigned,
+        CarrySet,
+        Negative,
+        OverflowSet,
+        Always,
+        NotEqual,
+        Greater,
+        GreaterOrEqual,
+        GreaterUnsigned,
+        CarryClear,
+        Positive,
+        OverflowClear,
+    }
+
+    impl SparcConditionCode {
+        pub fn from_raw(val: i8) -> Option<Self> {
+            match val {
+                0 => Some(Self::Never),
+                1 => Some(Self::Equal),
+                2 => Some(Self::LessOrEqual),
+                3 => Some(Self::Less),
+                4 => Some(Self::LessOrEqualUnsigned),
+                5 => Some(Self::CarrySet),
+                6 => Some(Self::Negative),
+                7 => Some(Self::OverflowSet),
+                8 => Some(Self::Always),
+                9 => Some(Self::NotEqual),
+                10 => Some(Self::Greater),
+                11 => Some(Self::GreaterOrEqual),
+                12 => Some(Self::GreaterUnsigned),
+                13 => Some(Self::CarryClear),
+                14 => Some(Self::Positive),
+                15 => Some(Self::OverflowClear),
+                _ => None,
+            }
+        }
+    }
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub enum Mc68xxSuffix {
+        Long,
+        A,
+        B,
+        H,
+        X,
+        Y,
+        S,
+        U,
+        D,
+    }
+
+    impl Mc68xxSuffix {
+        pub fn from_raw(val: i8) -> Option<Self> {
+            match val {
+                -1 => Some(Self::Long),
+                1 => Some(Self::A),
+                2 => Some(Self::B),
+                3 => Some(Self::H),
+                4 => Some(Self::X),
+                5 => Some(Self::Y),
+                6 => Some(Self::S),
+                7 => Some(Self::U),
+                8 => Some(Self::D),
+                _ => None,
+            }
+        }
+
+        pub fn suffix(&self) -> &'static str {
+            match self {
+                Self::Long => ".l",
+                Self::A => ".a",
+                Self::B => ".b",
+                Self::H => ".h",
+                Self::X => ".x",
+                Self::Y => ".y",
+                Self::S => ".s",
+                Self::U => ".u",
+                Self::D => ".d",
+            }
+        }
+    }
+}
+
 pub type InsnType = u16;
 
 impl Insn {
@@ -156,6 +355,14 @@ impl Insn {
 
     pub fn itype(&self) -> InsnType {
         self.inner.itype as _
+    }
+
+    /// Raw processor-dependent segment prefix value.
+    ///
+    /// Use [`IDB::segpref`] to interpret this value as a typed [`segpref::SegPref`]
+    /// based on the current processor family.
+    pub fn segpref(&self) -> i8 {
+        self.inner.segpref as i8
     }
 
     pub fn operand(&self, n: usize) -> Option<Operand> {
