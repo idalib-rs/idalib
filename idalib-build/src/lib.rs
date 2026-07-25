@@ -129,28 +129,24 @@ pub fn configure_linkage() -> anyhow::Result<()> {
         #[cfg(target_os = "linux")]
         {
             println!(
-                "cargo::rustc-link-arg=-Wl,-rpath,{},-L{},-l:libida.so",
-                install_path.display(),
-                stub_path.display(),
+                "cargo::rustc-link-arg=-Wl,-rpath,{}",
+                install_path.display()
             );
             println!(
-                "cargo::rustc-link-arg=-Wl,-rpath,{},-L{},-l:libidalib.so",
-                install_path.display(),
-                stub_path.display(),
+                "cargo::rustc-link-arg=-Wl,-L{},-l:libida.so,-l:libidalib.so",
+                stub_path.display()
             );
         }
 
         #[cfg(target_os = "macos")]
         {
             println!(
-                "cargo::rustc-link-arg=-Wl,-rpath,{},-L{},-lida",
-                install_path.display(),
-                stub_path.display(),
+                "cargo::rustc-link-arg=-Wl,-rpath,{}",
+                install_path.display()
             );
             println!(
-                "cargo::rustc-link-arg=-Wl,-rpath,{},-L{},-lidalib",
-                install_path.display(),
-                stub_path.display(),
+                "cargo::rustc-link-arg=-Wl,-L{},-lida,-lidalib",
+                stub_path.display()
             );
         }
     }

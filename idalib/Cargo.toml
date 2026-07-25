@@ -19,7 +19,7 @@ default = []
 
 [dependencies]
 anyhow = "1"
-autocxx = "0.27"
+autocxx = { version = "0.30", package = "autocxx-idalib" }
 bitflags = "2"
 cxx = "1"
 idalib-macros = { version = "0.9", path = "../idalib-macros", optional = true }

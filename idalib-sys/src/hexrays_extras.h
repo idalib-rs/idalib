@@ -72,3 +72,5 @@ cinsn_t *idalib_hexrays_cblock_iter_next(cblock_iter &it) {
 }
 
 std::size_t idalib_hexrays_cblock_len(cblock_t *b) { return b->size(); }
+
+cblock_t *idalib_hexrays_cfunc_body(cfunc_t *f) { return f->body.cblock; }

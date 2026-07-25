@@ -2,8 +2,8 @@ use std::marker::PhantomData;
 
 use crate::ffi::hexrays::{
     cblock_iter, cblock_t, cfunc_t, cfuncptr_t, cinsn_t, idalib_hexrays_cblock_iter,
-    idalib_hexrays_cblock_iter_next, idalib_hexrays_cblock_len, idalib_hexrays_cfunc_pseudocode,
-    idalib_hexrays_cfuncptr_inner,
+    idalib_hexrays_cblock_iter_next, idalib_hexrays_cblock_len, idalib_hexrays_cfunc_body,
+    idalib_hexrays_cfunc_pseudocode, idalib_hexrays_cfuncptr_inner,
 };
 use crate::idb::IDB;
 
@@ -67,13 +67,8 @@ impl<'a> CFunction<'a> {
         unsafe { idalib_hexrays_cfunc_pseudocode(self.ptr) }
     }
 
-    fn as_cfunc(&self) -> &cfunc_t {
-        unsafe { self.ptr.as_ref().expect("valid pointer") }
-    }
-
     pub fn body(&self) -> CBlock<'_> {
-        let cf = self.as_cfunc();
-        let ptr = unsafe { cf.body.__bindgen_anon_1.cblock };
+        let ptr = unsafe { idalib_hexrays_cfunc_body(self.ptr) };
 
         CBlock {
             ptr,
