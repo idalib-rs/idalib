@@ -1,2 +1,2 @@
-createSrcSidebar('[["idalib",["",[["plugin",[],["mod.rs"]]],["bookmarks.rs","decompiler.rs","func.rs","idb.rs","insn.rs","lib.rs","license.rs","meta.rs","name.rs","processor.rs","segment.rs","strings.rs","xref.rs"]]],["idalib_build",["",[],["lib.rs"]]]]');
-//{"start":19,"fragment_lengths":[197,36]}
+createSrcSidebar('[["idalib",["",[["plugin",[],["mod.rs"]]],["bookmarks.rs","decompiler.rs","func.rs","idb.rs","insn.rs","lib.rs","license.rs","meta.rs","name.rs","processor.rs","segment.rs","strings.rs","typeinf.rs","xref.rs"]]],["idalib_build",["",[],["lib.rs"]]]]');
+//{"start":19,"fragment_lengths":[210,36]}

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["PDF_DEF_BASE","PDF_DEF_FWD","PDF_HEADER_CMT","PDF_INCL_DEPS","PDF_NO_ANON_NAME"],"fn":["idalib_format_cfunc_decls","idalib_format_decls"]};
