@@ -530,10 +530,10 @@ impl IDB {
     where
         T: AsRef<str> + 'a,
     {
-        let mut cur = 0u64;
+        let mut cur = Some(0u64);
         std::iter::from_fn(move || {
-            let found = self.find_text(cur, text.as_ref())?;
-            cur = self.find_defined(found).unwrap_or(BADADDR.into());
+            let found = self.find_text(cur?, text.as_ref())?;
+            cur = self.find_defined(found);
             Some(found)
         })
     }
@@ -657,20 +657,19 @@ impl<'a> Iterator for EntryPointIter<'a> {
     type Item = Address;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.index >= self.limit {
-            return None;
-        }
-
-        let ordinal = unsafe { get_entry_ordinal(self.index) };
-        let addr = unsafe { get_entry(ordinal) };
-
-        // skip?
-        if addr == BADADDR {
+        while self.index < self.limit {
+            let index = self.index;
             self.index += 1;
-            return self.next();
+
+            let ordinal = unsafe { get_entry_ordinal(index) };
+            let addr = unsafe { get_entry(ordinal) };
+
+            if addr != BADADDR {
+                return Some(addr.into());
+            }
         }
 
-        Some(addr.into())
+        None
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {

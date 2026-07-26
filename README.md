@@ -1,7 +1,7 @@
 # idalib
 
 [![crates.io](https://img.shields.io/crates/v/idalib)](https://crates.io/crates/idalib)
-[![documentation](https://img.shields.io/badge/documentation-0.9.0%2B9.3.260327-blue?link=https%3A%2F%2Fidalib.rs%2Fidalib)](https://idalib.rs/idalib/)
+[![documentation](https://img.shields.io/badge/documentation-0.10.0%2B9.4.260714-blue?link=https%3A%2F%2Fidalib.rs%2Fidalib)](https://idalib.rs/idalib/)
 [![license](https://img.shields.io/crates/l/idalib)](https://github.com/idalib-rs/idalib)
 [![crates.io downloads](https://img.shields.io/crates/d/idalib)](https://crates.io/crates/idalib)
 
@@ -10,13 +10,14 @@ analysis tools using IDA v9.x’s idalib.
 
 ## IDA support and dependencies
 
-The bindings and examples have been tested against IDA Pro v9.3 on Windows
+The bindings and examples have been tested against IDA Pro v9.4 on Windows
 (11), Linux (Ubuntu 24.04 LTS), and macOS Sequoia (Apple Silicon). The latest
 bindings are only guaranteed compatible with the latest official IDA Pro/SDK
 release. See the table below for compatibility:
 
 | IDA Pro version | Latest compatible idalib |
 | --------------- | ------------------------ |
+| v9.4            | 0.10.0                   |
 | v9.3sp1         | 0.9.0                    |
 | v9.3            | 0.8.1                    |
 | v9.2            | 0.7.2                    |
@@ -62,10 +63,10 @@ name = "example-analyser"
 # ...
 
 [dependencies]
-idalib = "0.9"
+idalib = "0.10"
 
 [build-dependencies]
-idalib-build = "0.9"
+idalib-build = "0.10"
 ```
 
 `build.rs`:
@@ -102,8 +103,8 @@ cargo run --example=dump_ls
 Windows:
 
 ```powershell
-$env:PATH="C:\Program Files\IDA Professional 9.3;$env:PATH"
-$env:IDADIR="C:\Program Files\IDA Professional 9.3"
+$env:PATH="C:\Program Files\IDA Professional 9.4;$env:PATH"
+$env:IDADIR="C:\Program Files\IDA Professional 9.4"
 
 cargo run --example=dump_ls
 ```

@@ -8,7 +8,7 @@ name = "basic_plugin"
 crate-type = ["cdylib"]
 
 [dependencies]
-idalib = { version = "0.9", path = "../../idalib", features = ["plugin"] }
+idalib = { version = "0.10", path = "../../idalib", features = ["plugin"] }
 
 [build-dependencies]
-idalib-build = { version = "0.9", path = "../../idalib-build" }
+idalib-build = { version = "0.10", path = "../../idalib-build" }
