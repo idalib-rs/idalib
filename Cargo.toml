@@ -12,8 +12,3 @@ default-members = [
   "idalib-sys",
 ]
 resolver = "2"
-
-[patch.crates-io]
-autocxx-idalib = { git = "https://github.com/idalib-rs/autocxx" }
-autocxx-build-idalib = { git = "https://github.com/idalib-rs/autocxx" }
-autocxx-bindgen-idalib = { git = "https://github.com/idalib-rs/autocxx-bindgen" }
