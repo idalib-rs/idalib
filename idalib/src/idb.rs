@@ -23,6 +23,7 @@ use crate::ffi::plugin::find_plugin;
 use crate::ffi::processor::get_ph;
 use crate::ffi::search::{idalib_find_defined, idalib_find_imm, idalib_find_text};
 use crate::ffi::segment::{get_segm_by_name, get_segm_qty, getnseg, getseg};
+use crate::ffi::typeinf::{idalib_format_cfunc_decls, idalib_format_decls};
 use crate::ffi::util::{is_align_insn, next_head, prev_head, str2reg};
 use crate::ffi::xref::{xrefblk_t, xrefblk_t_first_from, xrefblk_t_first_to};
 
@@ -36,6 +37,7 @@ use crate::plugin::Plugin;
 use crate::processor::Processor;
 use crate::segment::{Segment, SegmentId};
 use crate::strings::StringList;
+use crate::typeinf::FormatDeclsOptions;
 use crate::xref::{XRef, XRefQuery};
 use crate::{Address, AddressFlags, IDAError, IDARuntimeHandle, prepare_library};
 
@@ -187,6 +189,33 @@ impl IDB {
 
     pub fn make_signatures(&mut self, only_pat: bool) -> Result<(), IDAError> {
         make_signatures(only_pat)
+    }
+
+    pub fn format_decls(&self) -> Result<String, IDAError> {
+        // `INCL_DEPS` pulls in definitions reachable by value, while `DEF_FWD`
+        // covers types only reachable through pointers.
+        self.format_decls_with(FormatDeclsOptions::INCL_DEPS | FormatDeclsOptions::DEF_FWD)
+    }
+
+    pub fn format_decls_with(&self, options: FormatDeclsOptions) -> Result<String, IDAError> {
+        unsafe { idalib_format_decls(options.bits()) }.map_err(IDAError::ffi)
+    }
+
+    pub fn format_cfunc_decls<'a>(&'a self, cfunc: &CFunction<'a>) -> Result<String, IDAError> {
+        // `INCL_DEPS` pulls in definitions reachable by value, while `DEF_FWD`
+        // covers types only reachable through pointers.
+        self.format_cfunc_decls_with(
+            cfunc,
+            FormatDeclsOptions::INCL_DEPS | FormatDeclsOptions::DEF_FWD,
+        )
+    }
+
+    pub fn format_cfunc_decls_with<'a>(
+        &'a self,
+        cfunc: &CFunction<'a>,
+        options: FormatDeclsOptions,
+    ) -> Result<String, IDAError> {
+        unsafe { idalib_format_cfunc_decls(cfunc.as_ptr(), options.bits()) }.map_err(IDAError::ffi)
     }
 
     pub fn decompiler_available(&self) -> bool {
@@ -501,10 +530,10 @@ impl IDB {
     where
         T: AsRef<str> + 'a,
     {
-        let mut cur = 0u64;
+        let mut cur = Some(0u64);
         std::iter::from_fn(move || {
-            let found = self.find_text(cur, text.as_ref())?;
-            cur = self.find_defined(found).unwrap_or(BADADDR.into());
+            let found = self.find_text(cur?, text.as_ref())?;
+            cur = self.find_defined(found);
             Some(found)
         })
     }
@@ -628,20 +657,19 @@ impl<'a> Iterator for EntryPointIter<'a> {
     type Item = Address;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.index >= self.limit {
-            return None;
-        }
-
-        let ordinal = unsafe { get_entry_ordinal(self.index) };
-        let addr = unsafe { get_entry(ordinal) };
-
-        // skip?
-        if addr == BADADDR {
+        while self.index < self.limit {
+            let index = self.index;
             self.index += 1;
-            return self.next();
+
+            let ordinal = unsafe { get_entry_ordinal(index) };
+            let addr = unsafe { get_entry(ordinal) };
+
+            if addr != BADADDR {
+                return Some(addr.into());
+            }
         }
 
-        Some(addr.into())
+        None
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {

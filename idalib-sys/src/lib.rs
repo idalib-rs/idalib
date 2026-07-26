@@ -2,7 +2,10 @@
 #![allow(clippy::missing_safety_doc)]
 #![allow(clippy::identity_op)]
 #![allow(clippy::needless_lifetimes)]
+#![allow(non_camel_case_types)]
 #![allow(unsafe_op_in_unsafe_fn)]
+#![allow(unnecessary_transmutes)]
+#![allow(unused_imports)]
 
 use std::path::PathBuf;
 
@@ -54,8 +57,6 @@ impl IDAError {
 }
 
 include_cpp! {
-    // NOTE: this fixes compilation issues on Windows when cross-compiling
-    #include "fixups.h"
     // NOTE: this fixes autocxx's inability to detect ea_t, optype_t as POD...
     #include "types.h"
 
@@ -79,6 +80,8 @@ include_cpp! {
     #include "xref.hpp"
 
     generate!("qstring")
+
+    opaque!("std::.*")
 
     // generate_pod!("cm_t")
     // generate_pod!("comp_t")
@@ -217,17 +220,24 @@ include_cpp! {
     generate!("MERR_LOOP")
     */
 
+    block!("eamap_t")
+    block!("boundaries_t")
+
     generate!("carg_t")
     generate!("carglist_t")
 
-    extern_cpp_type!("cblock_t", crate::hexrays::cblock_t)
-    extern_cpp_type!("cfunc_t", crate::hexrays::cfunc_t)
-    extern_cpp_type!("citem_t", crate::hexrays::citem_t)
-    extern_cpp_type!("cinsn_t", crate::hexrays::cinsn_t)
-    extern_cpp_type!("cexpr_t", crate::hexrays::cexpr_t)
-    extern_cpp_type!("cswitch_t", crate::hexrays::cswitch_t)
-    extern_cpp_type!("ctry_t", crate::hexrays::ctry_t)
-    extern_cpp_type!("cthrow_t", crate::hexrays::cthrow_t)
+    generate!("cblock_t")
+    generate!("cfunc_t")
+    generate!("citem_t")
+    generate!("cinsn_t")
+    generate!("cexpr_t")
+    generate!("cswitch_t")
+    generate!("ctry_t")
+    generate!("cthrow_t")
+    generate!("cnumber_t")
+    generate!("lvar_t")
+    generate!("lvar_locator_t")
+    generate!("vdloc_t")
 
     // idalib
     generate!("open_database")
@@ -356,6 +366,13 @@ include_cpp! {
     generate!("build_strlist")
     generate!("clear_strlist")
     generate!("get_strlist_qty")
+
+    // typeinf
+    generate!("PDF_INCL_DEPS")
+    generate!("PDF_DEF_FWD")
+    generate!("PDF_DEF_BASE")
+    generate!("PDF_HEADER_CMT")
+    generate!("PDF_NO_ANON_NAME")
 
     // loader
     extern_cpp_type!("plugin_t", crate::plugin::plugin_t)
@@ -525,56 +542,16 @@ pub mod hexrays {
         include!(concat!(env!("OUT_DIR"), "/hexrays.rs"));
     }
 
-    pub use __impl::{cblock_t, cexpr_t, cfunc_t, cinsn_t, citem_t, cswitch_t, cthrow_t, ctry_t};
-
     pub use super::ffi::{
-        carg_t, carglist_t, cfuncptr_t, init_hexrays_plugin, term_hexrays_plugin,
+        carg_t, carglist_t, cblock_t, cexpr_t, cfunc_t, cinsn_t, citem_t, cswitch_t, cthrow_t,
+        ctry_t, init_hexrays_plugin, qrefcnt_t_cfunc_t_AutocxxConcrete as cfuncptr_t,
+        term_hexrays_plugin,
     };
     pub use super::ffix::{
         cblock_iter, idalib_hexrays_cblock_iter, idalib_hexrays_cblock_iter_next,
-        idalib_hexrays_cblock_len, idalib_hexrays_cfunc_pseudocode, idalib_hexrays_cfuncptr_inner,
-        idalib_hexrays_decompile_func,
+        idalib_hexrays_cblock_len, idalib_hexrays_cfunc_body, idalib_hexrays_cfunc_pseudocode,
+        idalib_hexrays_cfuncptr_inner, idalib_hexrays_decompile_func,
     };
-
-    unsafe impl cxx::ExternType for cfunc_t {
-        type Id = cxx::type_id!("cfunc_t");
-        type Kind = cxx::kind::Opaque;
-    }
-
-    unsafe impl cxx::ExternType for citem_t {
-        type Id = cxx::type_id!("citem_t");
-        type Kind = cxx::kind::Opaque;
-    }
-
-    unsafe impl cxx::ExternType for cinsn_t {
-        type Id = cxx::type_id!("cinsn_t");
-        type Kind = cxx::kind::Opaque;
-    }
-
-    unsafe impl cxx::ExternType for cexpr_t {
-        type Id = cxx::type_id!("cexpr_t");
-        type Kind = cxx::kind::Opaque;
-    }
-
-    unsafe impl cxx::ExternType for cblock_t {
-        type Id = cxx::type_id!("cblock_t");
-        type Kind = cxx::kind::Opaque;
-    }
-
-    unsafe impl cxx::ExternType for cswitch_t {
-        type Id = cxx::type_id!("cswitch_t");
-        type Kind = cxx::kind::Opaque;
-    }
-
-    unsafe impl cxx::ExternType for cthrow_t {
-        type Id = cxx::type_id!("cthrow_t");
-        type Kind = cxx::kind::Opaque;
-    }
-
-    unsafe impl cxx::ExternType for ctry_t {
-        type Id = cxx::type_id!("ctry_t");
-        type Kind = cxx::kind::Opaque;
-    }
 
     pub unsafe fn decompile_func(
         f: *mut super::ffi::func_t,
@@ -806,6 +783,7 @@ mod ffix {
         include!("segm_extras.h");
         include!("search_extras.h");
         include!("strings_extras.h");
+        include!("typeinf_extras.h");
         include!("plugin_extras.h");
 
         type c_short = autocxx::c_short;
@@ -878,6 +856,7 @@ mod ffix {
         unsafe fn idalib_hexrays_cblock_iter(b: *mut cblock_t) -> UniquePtr<cblock_iter>;
         unsafe fn idalib_hexrays_cblock_iter_next(slf: Pin<&mut cblock_iter>) -> *mut cinsn_t;
         unsafe fn idalib_hexrays_cblock_len(b: *mut cblock_t) -> usize;
+        unsafe fn idalib_hexrays_cfunc_body(f: *mut cfunc_t) -> *mut cblock_t;
 
         unsafe fn idalib_inf_get_version() -> u16;
         unsafe fn idalib_inf_get_genflags() -> u16;
@@ -1115,10 +1094,16 @@ mod ffix {
             minor: *mut c_int,
             build: *mut c_int,
         ) -> bool;
+
+        unsafe fn idalib_format_decls(flags: u32) -> Result<String>;
+
+        unsafe fn idalib_format_cfunc_decls(cfunc: *mut cfunc_t, flags: u32) -> Result<String>;
     }
 }
 
-pub use ffi::{ea_t, range_t};
+pub use ffi::range_t;
+
+pub type ea_t = c_ulonglong;
 pub const BADADDR: ea_t = into_ea(0xffffffff_ffffffffu64);
 
 #[inline(always)]
@@ -1241,7 +1226,9 @@ pub mod segment {
 }
 
 pub mod bytes {
-    pub use super::ffi::{flags64_t, get_flags, is_code, is_data};
+    #[allow(non_camel_case_types)]
+    pub type flags64_t = autocxx::c_ulonglong;
+    pub use super::ffi::{get_flags, is_code, is_data};
     pub use super::ffix::{
         idalib_get_byte, idalib_get_bytes, idalib_get_dword, idalib_get_qword, idalib_get_word,
     };
@@ -1285,6 +1272,13 @@ pub mod search {
 pub mod strings {
     pub use super::ffi::{build_strlist, clear_strlist, get_strlist_qty};
     pub use super::ffix::{idalib_get_strlist_item_addr, idalib_get_strlist_item_length};
+}
+
+pub mod typeinf {
+    pub use super::ffi::{
+        PDF_DEF_BASE, PDF_DEF_FWD, PDF_HEADER_CMT, PDF_INCL_DEPS, PDF_NO_ANON_NAME,
+    };
+    pub use super::ffix::{idalib_format_cfunc_decls, idalib_format_decls};
 }
 
 pub mod nalt {

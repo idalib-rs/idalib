@@ -5,10 +5,10 @@
     "entryPoint": "ida_plugin_stub.py",
     "categories": ["api-scripting-and-automation", "integration-with-third-parties-interoperability"],
     "logoPath": "resources/logo.png",
-    "idaVersions": ["9.0", "9.1", "9.2", "9.3"],
+    "idaVersions": ["9.0", "9.1", "9.2", "9.3", "9.4"],
     "description" : "Idiomatic Rust bindings to IDA SDK",
     "license": "MIT OR Apache-2.0",
-    "version": "0.9.0",
+    "version": "0.10.0",
     "urls": {
       "repository": "https://github.com/idalib-rs/idalib",
       "documentation": "https://idalib.rs"

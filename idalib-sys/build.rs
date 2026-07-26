@@ -16,7 +16,12 @@ fn configure_and_generate(builder: BindgenBuilder, ida: &Path, output: impl AsRe
             #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
             &["-std=c++17", "-D__MACOS__=1", "-D__EA64__=1"],
             #[cfg(target_os = "windows")]
-            &["-std=c++17", "-D__NT__=1", "-D__EA64__=1"],
+            &[
+                "-std=c++17",
+                "-D__NT__=1",
+                "-D__EA64__=1",
+                "-D_CRT_USE_BUILTIN_OFFSETOF",
+            ],
         )
         .respect_cxx_access_specs(true)
         .generate()
@@ -44,7 +49,12 @@ fn main() {
             #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
             &["-std=c++17", "-D__MACOS__=1", "-D__EA64__=1"],
             #[cfg(target_os = "windows")]
-            &["-std=c++17", "-D__NT__=1", "-D__EA64__=1"],
+            &[
+                "-std=c++17",
+                "-D__NT__=1",
+                "-D__EA64__=1",
+                "-D_CRT_USE_BUILTIN_OFFSETOF",
+            ],
         )
         .build()
         .expect("parsed correctly");
@@ -142,38 +152,12 @@ fn main() {
     }
 
     let hexrays = autocxx_bindgen::builder()
-        .header(
-            ffi_path
-                .join("fixups.h")
-                .to_str()
-                .expect("path is valid string"),
-        )
         .header(ida.join("pro.h").to_str().expect("path is valid string"))
         .header(
             ida.join("hexrays.hpp")
                 .to_str()
                 .expect("path is valid string"),
         )
-        .opaque_type("std::.*")
-        .opaque_type("carglist_t")
-        .blocklist_item("iterator")
-        .blocklist_item("const_iterator")
-        .blocklist_item("rangeset_t_iterator")
-        .blocklist_item("rangeset_t_const_iterator")
-        .blocklist_item("ivlset_t_iterator")
-        .blocklist_item("ivlset_t_const_iterator")
-        .allowlist_item("cfunc_t")
-        .allowlist_item("citem_t")
-        .allowlist_item("cexpr_t")
-        .allowlist_item("cinsn_t")
-        .allowlist_item("cblock_t")
-        .allowlist_item("cswitch_t")
-        .allowlist_item("ctry_t")
-        .allowlist_item("cthrow_t")
-        .allowlist_item("cnumber_t")
-        .allowlist_item("lvar_t")
-        .allowlist_item("lvar_locator_t")
-        .allowlist_item("vdloc_t")
         .allowlist_item("CV_.*")
         .allowlist_item("DECOMP_.*");
 

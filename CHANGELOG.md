@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.10.0 (2026-07-26)
+
+- Compatibility with IDA 9.4.
+- Iterator fixes (previously induced infinite loops).
+- Global/function-level type extraction. (contributor:
+  [@0xdea](https://github.com/0xdea)).
+
 ## 0.9.0 (2026-04-14)
 
 Features:

@@ -3,13 +3,13 @@ use std::path::{Path, PathBuf};
 
 fn link_path() -> PathBuf {
     #[cfg(target_os = "macos")]
-    return PathBuf::from("/Applications/IDA Professional 9.3.app/Contents/MacOS");
+    return PathBuf::from("/Applications/IDA Professional 9.4.app/Contents/MacOS");
 
     #[cfg(target_os = "linux")]
-    return PathBuf::from(env::var("HOME").unwrap()).join("ida-pro-9.3");
+    return PathBuf::from(env::var("HOME").unwrap()).join("ida-pro-9.4");
 
     #[cfg(target_os = "windows")]
-    return PathBuf::from("C:\\Program Files\\IDA Professional 9.3");
+    return PathBuf::from("C:\\Program Files\\IDA Professional 9.4");
 }
 
 pub fn idalib_sdk_paths() -> (PathBuf, PathBuf, PathBuf, PathBuf) {
@@ -129,28 +129,24 @@ pub fn configure_linkage() -> anyhow::Result<()> {
         #[cfg(target_os = "linux")]
         {
             println!(
-                "cargo::rustc-link-arg=-Wl,-rpath,{},-L{},-l:libida.so",
-                install_path.display(),
-                stub_path.display(),
+                "cargo::rustc-link-arg=-Wl,-rpath,{}",
+                install_path.display()
             );
             println!(
-                "cargo::rustc-link-arg=-Wl,-rpath,{},-L{},-l:libidalib.so",
-                install_path.display(),
-                stub_path.display(),
+                "cargo::rustc-link-arg=-Wl,-L{},-l:libida.so,-l:libidalib.so",
+                stub_path.display()
             );
         }
 
         #[cfg(target_os = "macos")]
         {
             println!(
-                "cargo::rustc-link-arg=-Wl,-rpath,{},-L{},-lida",
-                install_path.display(),
-                stub_path.display(),
+                "cargo::rustc-link-arg=-Wl,-rpath,{}",
+                install_path.display()
             );
             println!(
-                "cargo::rustc-link-arg=-Wl,-rpath,{},-L{},-lidalib",
-                install_path.display(),
-                stub_path.display(),
+                "cargo::rustc-link-arg=-Wl,-L{},-lida,-lidalib",
+                stub_path.display()
             );
         }
     }

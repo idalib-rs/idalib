@@ -34,5 +34,6 @@ jobs:
           rm -rf target Cargo.lock .gitmodules idalib-sys/sdk
           git add .
           git config push.autosetupremote true
+          git config pack.useSparse false
           git commit -m 'update documentation'
           git push
