@@ -67,6 +67,10 @@ impl<'a> CFunction<'a> {
         unsafe { idalib_hexrays_cfunc_pseudocode(self.ptr) }
     }
 
+    pub(crate) fn as_ptr(&self) -> *mut cfunc_t {
+        self.ptr
+    }
+
     pub fn body(&self) -> CBlock<'_> {
         let ptr = unsafe { idalib_hexrays_cfunc_body(self.ptr) };
 

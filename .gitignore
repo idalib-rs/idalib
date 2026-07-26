@@ -4,3 +4,5 @@
 /**/Cargo.lock
 /beta3
 /beta4
+.idea
+.DS_Store

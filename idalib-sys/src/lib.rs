@@ -367,6 +367,13 @@ include_cpp! {
     generate!("clear_strlist")
     generate!("get_strlist_qty")
 
+    // typeinf
+    generate!("PDF_INCL_DEPS")
+    generate!("PDF_DEF_FWD")
+    generate!("PDF_DEF_BASE")
+    generate!("PDF_HEADER_CMT")
+    generate!("PDF_NO_ANON_NAME")
+
     // loader
     extern_cpp_type!("plugin_t", crate::plugin::plugin_t)
     generate!("find_plugin")
@@ -776,6 +783,7 @@ mod ffix {
         include!("segm_extras.h");
         include!("search_extras.h");
         include!("strings_extras.h");
+        include!("typeinf_extras.h");
         include!("plugin_extras.h");
 
         type c_short = autocxx::c_short;
@@ -1086,6 +1094,10 @@ mod ffix {
             minor: *mut c_int,
             build: *mut c_int,
         ) -> bool;
+
+        unsafe fn idalib_format_decls(flags: u32) -> Result<String>;
+
+        unsafe fn idalib_format_cfunc_decls(cfunc: *mut cfunc_t, flags: u32) -> Result<String>;
     }
 }
 
@@ -1260,6 +1272,13 @@ pub mod search {
 pub mod strings {
     pub use super::ffi::{build_strlist, clear_strlist, get_strlist_qty};
     pub use super::ffix::{idalib_get_strlist_item_addr, idalib_get_strlist_item_length};
+}
+
+pub mod typeinf {
+    pub use super::ffi::{
+        PDF_DEF_BASE, PDF_DEF_FWD, PDF_HEADER_CMT, PDF_INCL_DEPS, PDF_NO_ANON_NAME,
+    };
+    pub use super::ffix::{idalib_format_cfunc_decls, idalib_format_decls};
 }
 
 pub mod nalt {
