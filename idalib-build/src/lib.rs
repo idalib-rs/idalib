@@ -3,13 +3,13 @@ use std::path::{Path, PathBuf};
 
 fn link_path() -> PathBuf {
     #[cfg(target_os = "macos")]
-    return PathBuf::from("/Applications/IDA Professional 9.3.app/Contents/MacOS");
+    return PathBuf::from("/Applications/IDA Professional 9.4.app/Contents/MacOS");
 
     #[cfg(target_os = "linux")]
-    return PathBuf::from(env::var("HOME").unwrap()).join("ida-pro-9.3");
+    return PathBuf::from(env::var("HOME").unwrap()).join("ida-pro-9.4");
 
     #[cfg(target_os = "windows")]
-    return PathBuf::from("C:\\Program Files\\IDA Professional 9.3");
+    return PathBuf::from("C:\\Program Files\\IDA Professional 9.4");
 }
 
 pub fn idalib_sdk_paths() -> (PathBuf, PathBuf, PathBuf, PathBuf) {
