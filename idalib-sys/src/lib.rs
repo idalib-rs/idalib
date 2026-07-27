@@ -551,11 +551,11 @@ pub mod hexrays {
     pub use super::ffix::{
         cblock_iter, idalib_hexrays_cblock_iter, idalib_hexrays_cblock_iter_next,
         idalib_hexrays_cblock_len, idalib_hexrays_cfunc_body, idalib_hexrays_cfunc_pseudocode,
-        idalib_hexrays_cfuncptr_inner, idalib_hexrays_decompile_func,
+        idalib_hexrays_cfuncptr_inner, idalib_hexrays_decompile_function,
     };
 
-    pub unsafe fn decompile_func(
-        f: *mut super::ffi::func_t,
+    pub unsafe fn decompile_function(
+        func_ea: super::ea_t,
         all_blocks: bool,
     ) -> Result<cxx::UniquePtr<cfuncptr_t>, HexRaysError> {
         let mut flags = __impl::DECOMP_NO_WAIT | __impl::DECOMP_NO_CACHE;
@@ -565,8 +565,8 @@ pub mod hexrays {
         }
 
         let mut failure = super::ffix::hexrays_error_t::default();
-        let result = super::ffix::idalib_hexrays_decompile_func(
-            f,
+        let result = super::ffix::idalib_hexrays_decompile_function(
+            func_ea,
             &mut failure as *mut _,
             (flags as i32).into(),
         );
@@ -848,8 +848,8 @@ mod ffix {
         ) -> *mut cfunc_t;
         unsafe fn idalib_hexrays_cfunc_pseudocode(f: *mut cfunc_t) -> String;
 
-        unsafe fn idalib_hexrays_decompile_func(
-            f: *mut func_t,
+        unsafe fn idalib_hexrays_decompile_function(
+            func_ea: c_ulonglong,
             err: *mut hexrays_error_t,
             flags: c_int,
         ) -> UniquePtr<qrefcnt_t_cfunc_t_AutocxxConcrete>;

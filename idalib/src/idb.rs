@@ -14,7 +14,7 @@ use crate::ffi::func::{
 };
 #[cfg(not(feature = "plugin"))]
 use crate::ffi::hexrays::term_hexrays_plugin;
-use crate::ffi::hexrays::{change_hexrays_config, decompile_func, init_hexrays_plugin};
+use crate::ffi::hexrays::{change_hexrays_config, decompile_function, init_hexrays_plugin};
 #[cfg(not(feature = "plugin"))]
 use crate::ffi::ida::{auto_wait, close_database_with, open_database_quiet};
 use crate::ffi::ida::{make_signatures, set_screen_ea};
@@ -316,7 +316,7 @@ impl IDB {
         }
 
         Ok(unsafe {
-            decompile_func(f.as_ptr(), all_blocks)
+            decompile_function(f.start_address().into(), all_blocks)
                 .map(|f| CFunction::new(f).expect("null pointer checked"))?
         })
     }
