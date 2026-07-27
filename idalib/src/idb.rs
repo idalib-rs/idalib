@@ -14,7 +14,7 @@ use crate::ffi::func::{
 };
 #[cfg(not(feature = "plugin"))]
 use crate::ffi::hexrays::term_hexrays_plugin;
-use crate::ffi::hexrays::{decompile_func, init_hexrays_plugin};
+use crate::ffi::hexrays::{change_hexrays_config, decompile_func, init_hexrays_plugin};
 #[cfg(not(feature = "plugin"))]
 use crate::ffi::ida::{auto_wait, close_database_with, open_database_quiet};
 use crate::ffi::ida::{make_signatures, set_screen_ea};
@@ -220,6 +220,23 @@ impl IDB {
 
     pub fn decompiler_available(&self) -> bool {
         self.decompiler
+    }
+
+    pub fn change_hexrays_config(&self, directive: impl AsRef<str>) -> Result<(), IDAError> {
+        if !self.decompiler {
+            return Err(IDAError::ffi_with("no decompiler available"));
+        }
+
+        let directive = directive.as_ref();
+        let s = CString::new(directive).map_err(IDAError::ffi)?;
+
+        if unsafe { change_hexrays_config(s.as_ptr()) } {
+            Ok(())
+        } else {
+            Err(IDAError::ffi_with(format!(
+                "failed to apply hexrays config directive `{directive}`"
+            )))
+        }
     }
 
     pub fn meta(&self) -> Metadata<'_> {

@@ -172,6 +172,7 @@ include_cpp! {
     // hexrays
     generate!("init_hexrays_plugin")
     generate!("term_hexrays_plugin")
+    generate!("change_hexrays_config")
 
     // generate!("decompile_func")
     generate!("cfuncptr_t")
@@ -543,9 +544,9 @@ pub mod hexrays {
     }
 
     pub use super::ffi::{
-        carg_t, carglist_t, cblock_t, cexpr_t, cfunc_t, cinsn_t, citem_t, cswitch_t, cthrow_t,
-        ctry_t, init_hexrays_plugin, qrefcnt_t_cfunc_t_AutocxxConcrete as cfuncptr_t,
-        term_hexrays_plugin,
+        carg_t, carglist_t, cblock_t, cexpr_t, cfunc_t, change_hexrays_config, cinsn_t, citem_t,
+        cswitch_t, cthrow_t, ctry_t, init_hexrays_plugin,
+        qrefcnt_t_cfunc_t_AutocxxConcrete as cfuncptr_t, term_hexrays_plugin,
     };
     pub use super::ffix::{
         cblock_iter, idalib_hexrays_cblock_iter, idalib_hexrays_cblock_iter_next,
