@@ -24,7 +24,7 @@ use crate::ffi::processor::get_ph;
 use crate::ffi::search::{idalib_find_defined, idalib_find_imm, idalib_find_text};
 use crate::ffi::segment::{get_segm_by_name, get_segm_qty, getnseg, getseg};
 use crate::ffi::typeinf::{idalib_format_cfunc_decls, idalib_format_decls};
-use crate::ffi::util::{is_align_insn, next_head, prev_head, str2reg};
+use crate::ffi::util::{get_imagebase, is_align_insn, next_head, prev_head, str2reg};
 use crate::ffi::xref::{xrefblk_t, xrefblk_t_first_from, xrefblk_t_first_to};
 
 use crate::bookmarks::Bookmarks;
@@ -580,6 +580,10 @@ impl IDB {
 
     pub fn flags_at(&self, ea: Address) -> AddressFlags<'_> {
         AddressFlags::new(unsafe { get_flags(ea.into()) })
+    }
+
+    pub fn image_base(&self) -> Address {
+        unsafe { get_imagebase() }.into()
     }
 
     pub fn get_byte(&self, ea: Address) -> u8 {

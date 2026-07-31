@@ -386,6 +386,7 @@ include_cpp! {
     extern_cpp_type!("plugin_t", crate::plugin::plugin_t)
     generate!("find_plugin")
     generate!("run_plugin")
+    generate!("get_imagebase")
 
     generate!("PLUGIN_MOD")
     generate!("PLUGIN_DRAW")
@@ -1247,8 +1248,8 @@ pub mod bytes {
 
 pub mod util {
     pub use super::ffi::{
-        is_align_insn, is_basic_block_end, is_call_insn, is_indirect_jump_insn, is_ret_insn,
-        next_head, prev_head, str2reg,
+        get_imagebase, is_align_insn, is_basic_block_end, is_call_insn, is_indirect_jump_insn,
+        is_ret_insn, next_head, prev_head, str2reg,
     };
 }
 
