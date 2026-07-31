@@ -99,6 +99,14 @@ include_cpp! {
     generate!("is_data")
     generate!("is_code")
     generate!("get_flags")
+    generate!("is_byte")
+    generate!("is_word")
+    generate!("is_dword")
+    generate!("is_qword")
+    generate!("is_oword")
+    generate!("is_float")
+    generate!("is_double")
+    generate!("is_strlit")
 
     // entry
     generate!("get_entry")
@@ -378,6 +386,7 @@ include_cpp! {
     extern_cpp_type!("plugin_t", crate::plugin::plugin_t)
     generate!("find_plugin")
     generate!("run_plugin")
+    generate!("get_imagebase")
 
     generate!("PLUGIN_MOD")
     generate!("PLUGIN_DRAW")
@@ -784,6 +793,7 @@ mod ffix {
         include!("search_extras.h");
         include!("strings_extras.h");
         include!("typeinf_extras.h");
+        include!("ua_extras.h");
         include!("plugin_extras.h");
 
         type c_short = autocxx::c_short;
@@ -1076,6 +1086,8 @@ mod ffix {
 
         unsafe fn idalib_ea2str(ea: c_ulonglong) -> String;
 
+        unsafe fn idalib_print_insn_mnem(ea: c_ulonglong) -> String;
+
         unsafe fn idalib_msg(msg: *const c_char);
 
         unsafe fn idalib_get_byte(ea: c_ulonglong) -> u8;
@@ -1127,6 +1139,7 @@ pub mod insn {
     use super::ea_t;
     use super::ffi::decode_insn;
 
+    pub use super::ffix::idalib_print_insn_mnem;
     pub use super::pod::insn_t;
 
     pub fn decode(ea: ea_t) -> Option<insn_t> {
@@ -1228,7 +1241,10 @@ pub mod segment {
 pub mod bytes {
     #[allow(non_camel_case_types)]
     pub type flags64_t = autocxx::c_ulonglong;
-    pub use super::ffi::{get_flags, is_code, is_data};
+    pub use super::ffi::{
+        get_flags, is_byte, is_code, is_data, is_double, is_dword, is_float, is_oword, is_qword,
+        is_strlit, is_word,
+    };
     pub use super::ffix::{
         idalib_get_byte, idalib_get_bytes, idalib_get_dword, idalib_get_qword, idalib_get_word,
     };
@@ -1236,8 +1252,8 @@ pub mod bytes {
 
 pub mod util {
     pub use super::ffi::{
-        is_align_insn, is_basic_block_end, is_call_insn, is_indirect_jump_insn, is_ret_insn,
-        next_head, prev_head, str2reg,
+        get_imagebase, is_align_insn, is_basic_block_end, is_call_insn, is_indirect_jump_insn,
+        is_ret_insn, next_head, prev_head, str2reg,
     };
 }
 
