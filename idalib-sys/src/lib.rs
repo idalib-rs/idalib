@@ -99,6 +99,14 @@ include_cpp! {
     generate!("is_data")
     generate!("is_code")
     generate!("get_flags")
+    generate!("is_byte")
+    generate!("is_word")
+    generate!("is_dword")
+    generate!("is_qword")
+    generate!("is_oword")
+    generate!("is_float")
+    generate!("is_double")
+    generate!("is_strlit")
 
     // entry
     generate!("get_entry")
@@ -1228,7 +1236,10 @@ pub mod segment {
 pub mod bytes {
     #[allow(non_camel_case_types)]
     pub type flags64_t = autocxx::c_ulonglong;
-    pub use super::ffi::{get_flags, is_code, is_data};
+    pub use super::ffi::{
+        get_flags, is_byte, is_code, is_data, is_double, is_dword, is_float, is_oword, is_qword,
+        is_strlit, is_word,
+    };
     pub use super::ffix::{
         idalib_get_byte, idalib_get_bytes, idalib_get_dword, idalib_get_qword, idalib_get_word,
     };
