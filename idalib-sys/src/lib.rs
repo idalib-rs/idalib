@@ -793,6 +793,7 @@ mod ffix {
         include!("search_extras.h");
         include!("strings_extras.h");
         include!("typeinf_extras.h");
+        include!("ua_extras.h");
         include!("plugin_extras.h");
 
         type c_short = autocxx::c_short;
@@ -1085,6 +1086,8 @@ mod ffix {
 
         unsafe fn idalib_ea2str(ea: c_ulonglong) -> String;
 
+        unsafe fn idalib_print_insn_mnem(ea: c_ulonglong) -> String;
+
         unsafe fn idalib_msg(msg: *const c_char);
 
         unsafe fn idalib_get_byte(ea: c_ulonglong) -> u8;
@@ -1136,6 +1139,7 @@ pub mod insn {
     use super::ea_t;
     use super::ffi::decode_insn;
 
+    pub use super::ffix::idalib_print_insn_mnem;
     pub use super::pod::insn_t;
 
     pub fn decode(ea: ea_t) -> Option<insn_t> {
