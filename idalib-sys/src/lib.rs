@@ -770,6 +770,12 @@ mod ffix {
         desc: String,
     }
 
+    #[derive(Default)]
+    struct func_tail_t {
+        start_ea: u64,
+        end_ea: u64,
+    }
+
     extern "Rust" {
         type PlugMod;
 
@@ -851,6 +857,8 @@ mod ffix {
         unsafe fn idalib_func_name(f: *const func_t) -> Result<String>;
         unsafe fn idalib_get_func_cmt(f: *const func_t, rptble: bool) -> Result<String>;
         unsafe fn idalib_set_func_cmt(f: *const func_t, cmt: *const c_char, rptble: bool) -> bool;
+
+        unsafe fn idalib_func_tails(f: *const func_t, out: &mut Vec<func_tail_t>);
 
         unsafe fn idalib_func_flow_chart(
             f: *mut func_t,
@@ -1196,9 +1204,9 @@ pub mod func {
         get_func_num, get_func_qty, getn_func, lock_func, qbasic_block_t, qflow_chart_t,
     };
     pub use super::ffix::{
-        idalib_func_flags, idalib_func_flow_chart, idalib_func_name, idalib_get_func_cmt,
-        idalib_qbasic_block_preds, idalib_qbasic_block_succs, idalib_qflow_graph_getn_block,
-        idalib_set_func_cmt,
+        func_tail_t, idalib_func_flags, idalib_func_flow_chart, idalib_func_name,
+        idalib_func_tails, idalib_get_func_cmt, idalib_qbasic_block_preds,
+        idalib_qbasic_block_succs, idalib_qflow_graph_getn_block, idalib_set_func_cmt,
     };
 
     pub mod flags {
