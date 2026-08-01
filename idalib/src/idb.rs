@@ -222,7 +222,7 @@ impl IDB {
         self.decompiler
     }
 
-    pub fn change_hexrays_config(&self, directive: impl AsRef<str>) -> Result<(), IDAError> {
+    pub fn modify_decompiler_config(&mut self, directive: impl AsRef<str>) -> Result<(), IDAError> {
         if !self.decompiler {
             return Err(IDAError::ffi_with("no decompiler available"));
         }
