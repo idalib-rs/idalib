@@ -158,6 +158,10 @@ impl<'a> AddressFlags<'a> {
     pub fn is_strlit(&self) -> bool {
         unsafe { ffi::bytes::is_strlit(self.flags) }
     }
+
+    pub fn is_off(&self, n: usize) -> bool {
+        unsafe { ffi::bytes::is_off(self.flags, (n as i32).into()) }
+    }
 }
 
 pub struct IDA;
