@@ -26,22 +26,47 @@ pub struct Operand {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(u8)]
 pub enum OperandType {
     // Void -- we exclude it during creation
-    Reg = o_reg,
-    Mem = o_mem,
-    Phrase = o_phrase,
-    Displ = o_displ,
-    Imm = o_imm,
-    Far = o_far,
-    Near = o_near,
-    IdpSpec0 = o_idpspec0,
-    IdpSpec1 = o_idpspec1,
-    IdpSpec2 = o_idpspec2,
-    IdpSpec3 = o_idpspec3,
-    IdpSpec4 = o_idpspec4,
-    IdpSpec5 = o_idpspec5,
+    Reg,
+    Mem,
+    Phrase,
+    Displ,
+    Imm,
+    Far,
+    Near,
+    IdpSpec0,
+    IdpSpec1,
+    IdpSpec2,
+    IdpSpec3,
+    IdpSpec4,
+    IdpSpec5,
+    Other(u8),
+}
+
+impl OperandType {
+    #[expect(
+        non_upper_case_globals,
+        reason = "the o_* constants come from the SDK and keep their C names"
+    )]
+    fn from_raw(raw: u8) -> Self {
+        match raw {
+            o_reg => Self::Reg,
+            o_mem => Self::Mem,
+            o_phrase => Self::Phrase,
+            o_displ => Self::Displ,
+            o_imm => Self::Imm,
+            o_far => Self::Far,
+            o_near => Self::Near,
+            o_idpspec0 => Self::IdpSpec0,
+            o_idpspec1 => Self::IdpSpec1,
+            o_idpspec2 => Self::IdpSpec2,
+            o_idpspec3 => Self::IdpSpec3,
+            o_idpspec4 => Self::IdpSpec4,
+            o_idpspec5 => Self::IdpSpec5,
+            other => Self::Other(other),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -172,7 +197,7 @@ impl Operand {
     }
 
     pub fn type_(&self) -> OperandType {
-        unsafe { mem::transmute(self.inner.type_) }
+        OperandType::from_raw(self.inner.type_)
     }
 
     pub fn dtype(&self) -> OperandDataType {
@@ -299,6 +324,7 @@ impl Operand {
                 | OperandType::IdpSpec3
                 | OperandType::IdpSpec4
                 | OperandType::IdpSpec5
+                | OperandType::Other(_)
         )
     }
 }
