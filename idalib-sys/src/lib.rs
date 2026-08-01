@@ -109,6 +109,10 @@ include_cpp! {
     generate!("is_strlit")
     generate!("is_off")
 
+    // funcs
+    generate!("add_func")
+    generate!("del_func")
+
     // entry
     generate!("get_entry")
     generate!("get_entry_ordinal")
@@ -1188,8 +1192,8 @@ pub mod insn {
 
 pub mod func {
     pub use super::ffi::{
-        calc_thunk_func_target, fc_block_type_t, func_t, gdl_graph_t, get_func, get_func_num,
-        get_func_qty, getn_func, lock_func, qbasic_block_t, qflow_chart_t,
+        add_func, calc_thunk_func_target, del_func, fc_block_type_t, func_t, gdl_graph_t, get_func,
+        get_func_num, get_func_qty, getn_func, lock_func, qbasic_block_t, qflow_chart_t,
     };
     pub use super::ffix::{
         idalib_func_flags, idalib_func_flow_chart, idalib_func_name, idalib_get_func_cmt,

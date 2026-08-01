@@ -10,7 +10,7 @@ use crate::ffi::comments::{append_cmt, idalib_get_cmt, set_cmt};
 use crate::ffi::conversions::idalib_ea2str;
 use crate::ffi::entry::{get_entry, get_entry_ordinal, get_entry_qty};
 use crate::ffi::func::{
-    get_func, get_func_qty, getn_func, idalib_get_func_cmt, idalib_set_func_cmt,
+    add_func, del_func, get_func, get_func_qty, getn_func, idalib_get_func_cmt, idalib_set_func_cmt,
 };
 #[cfg(not(feature = "plugin"))]
 use crate::ffi::hexrays::term_hexrays_plugin;
@@ -252,6 +252,32 @@ impl IDB {
         }
 
         Some(Function::from_ptr(ptr))
+    }
+
+    /// These take &mut self, unlike the other database mutators, because they
+    /// invalidate every func_t the database has handed out.
+    pub fn add_function(&mut self, start: Address) -> Result<(), IDAError> {
+        self.add_function_with(start, BADADDR.into())
+    }
+
+    pub fn add_function_with(&mut self, start: Address, end: Address) -> Result<(), IDAError> {
+        if unsafe { add_func(start.into(), end.into()) } {
+            Ok(())
+        } else {
+            Err(IDAError::ffi_with(format!(
+                "failed to add function at {start:#x}"
+            )))
+        }
+    }
+
+    pub fn remove_function(&mut self, start: Address) -> Result<(), IDAError> {
+        if unsafe { del_func(start.into()) } {
+            Ok(())
+        } else {
+            Err(IDAError::ffi_with(format!(
+                "failed to delete function at {start:#x}"
+            )))
+        }
     }
 
     pub fn next_head(&self, ea: Address) -> Option<Address> {
