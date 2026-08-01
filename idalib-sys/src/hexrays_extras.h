@@ -31,9 +31,9 @@ struct cblock_iter {
 cfunc_t *idalib_hexrays_cfuncptr_inner(const cfuncptr_t *f) { return *f; }
 
 std::unique_ptr<cfuncptr_t>
-idalib_hexrays_decompile_func(func_t *f, hexrays_error_t *err, int flags) {
+idalib_hexrays_decompile_function(ea_t func_ea, hexrays_error_t *err, int flags) {
   hexrays_failure_t failure;
-  cfuncptr_t cf = decompile_func(f, &failure, flags);
+  cfuncptr_t cf = decompile_function(func_ea, &failure, flags);
 
   if (failure.code >= 0 && cf != nullptr) {
     return std::unique_ptr<cfuncptr_t>(new cfuncptr_t(cf));
