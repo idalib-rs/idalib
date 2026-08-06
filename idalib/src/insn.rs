@@ -3,6 +3,7 @@ use std::mem;
 use bitflags::bitflags;
 
 use crate::ffi::insn::insn_t;
+use crate::ffi::insn::idalib_print_insn_mnem;
 use crate::ffi::insn::op::*;
 use crate::ffi::util::{is_basic_block_end, is_call_insn, is_indirect_jump_insn, is_ret_insn};
 
@@ -101,6 +102,12 @@ impl Insn {
 
     pub fn itype(&self) -> InsnType {
         self.inner.itype as _
+    }
+
+    pub fn mnemonic(&self) -> Option<String> {
+        let s = unsafe { idalib_print_insn_mnem(self.address().into()) };
+
+        if s.is_empty() { None } else { Some(s) }
     }
 
     pub fn operand(&self, n: usize) -> Option<Operand> {

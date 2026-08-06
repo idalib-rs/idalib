@@ -126,6 +126,42 @@ impl<'a> AddressFlags<'a> {
     pub fn is_data(&self) -> bool {
         unsafe { ffi::bytes::is_data(self.flags) }
     }
+
+    pub fn is_byte(&self) -> bool {
+        unsafe { ffi::bytes::is_byte(self.flags) }
+    }
+
+    pub fn is_word(&self) -> bool {
+        unsafe { ffi::bytes::is_word(self.flags) }
+    }
+
+    pub fn is_dword(&self) -> bool {
+        unsafe { ffi::bytes::is_dword(self.flags) }
+    }
+
+    pub fn is_qword(&self) -> bool {
+        unsafe { ffi::bytes::is_qword(self.flags) }
+    }
+
+    pub fn is_oword(&self) -> bool {
+        unsafe { ffi::bytes::is_oword(self.flags) }
+    }
+
+    pub fn is_float(&self) -> bool {
+        unsafe { ffi::bytes::is_float(self.flags) }
+    }
+
+    pub fn is_double(&self) -> bool {
+        unsafe { ffi::bytes::is_double(self.flags) }
+    }
+
+    pub fn is_strlit(&self) -> bool {
+        unsafe { ffi::bytes::is_strlit(self.flags) }
+    }
+
+    pub fn is_off(&self, n: usize) -> bool {
+        unsafe { ffi::bytes::is_off(self.flags, (n as i32).into()) }
+    }
 }
 
 pub struct IDA;

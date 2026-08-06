@@ -10,6 +10,30 @@
 
 #include "cxx.h"
 
+#ifndef CXXBRIDGE1_STRUCT_func_tail_t
+#define CXXBRIDGE1_STRUCT_func_tail_t
+struct func_tail_t final {
+  ::std::uint64_t start_ea;
+  ::std::uint64_t end_ea;
+
+  using IsRelocatable = ::std::true_type;
+};
+#endif // CXXBRIDGE1_STRUCT_func_tail_t
+
+void idalib_func_tails(const func_t *f, rust::Vec<func_tail_t> &out) {
+  if (f == nullptr) {
+    return;
+  }
+
+  auto ranges = rangevec_t();
+
+  if (get_func_tails(&ranges, f->start_ea)) {
+    for (const auto &r : ranges) {
+      out.push_back(func_tail_t{r.start_ea, r.end_ea});
+    }
+  }
+}
+
 uint64_t idalib_func_flags(const func_t *f) {
   return f == nullptr ? 0 : f->flags;
 }

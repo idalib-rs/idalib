@@ -1,5 +1,6 @@
 use std::marker::PhantomData;
 use std::mem;
+use std::ops::Range;
 use std::pin::Pin;
 use std::ptr;
 
@@ -253,6 +254,13 @@ impl<'a> Function<'a> {
         } else {
             Some(addr.into())
         }
+    }
+
+    pub fn tails(&self) -> impl ExactSizeIterator<Item = Range<Address>> {
+        let mut tails = Vec::new();
+        unsafe { idalib_func_tails(self.ptr, &mut tails) };
+
+        tails.into_iter().map(|tail| tail.start_ea..tail.end_ea)
     }
 
     pub fn cfg(&self) -> Result<FunctionCFG<'_>, IDAError> {
