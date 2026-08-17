@@ -10,6 +10,7 @@ use crate::ffi::util::{is_basic_block_end, is_call_insn, is_indirect_jump_insn, 
 pub use crate::ffi::insn::{arm, mips, x86};
 
 use crate::Address;
+use crate::as_signed_char;
 
 pub type Register = u16;
 pub type Phrase = u16;
@@ -516,11 +517,11 @@ impl Operand {
     }
 
     pub fn offb(&self) -> i8 {
-        self.inner.offb
+        as_signed_char(self.inner.offb)
     }
 
     pub fn offo(&self) -> i8 {
-        self.inner.offo
+        as_signed_char(self.inner.offo)
     }
 
     pub fn n(&self) -> usize {
@@ -620,7 +621,7 @@ impl Operand {
 
     pub fn processor_specific_flag1(&self) -> Option<i8> {
         if self.is_processor_specific() {
-            Some(self.inner.specflag1)
+            Some(as_signed_char(self.inner.specflag1))
         } else {
             None
         }
@@ -628,7 +629,7 @@ impl Operand {
 
     pub fn processor_specific_flag2(&self) -> Option<i8> {
         if self.is_processor_specific() {
-            Some(self.inner.specflag2)
+            Some(as_signed_char(self.inner.specflag2))
         } else {
             None
         }
@@ -651,17 +652,17 @@ impl Operand {
     /// 0 (base) and 1 (SIB). Other processor modules assign their own meanings, so
     /// callers that must distinguish those need the raw value.
     pub fn specflag1(&self) -> i8 {
-        self.inner.specflag1
+        as_signed_char(self.inner.specflag1)
     }
 
     /// Get specflag2 for phrase/displ operands (used for x86 SIB byte base extraction).
     pub fn specflag2(&self) -> i8 {
-        self.inner.specflag2
+        as_signed_char(self.inner.specflag2)
     }
 
     pub fn processor_specific_flag3(&self) -> Option<i8> {
         if self.is_processor_specific() {
-            Some(self.inner.specflag3)
+            Some(as_signed_char(self.inner.specflag3))
         } else {
             None
         }
@@ -669,7 +670,7 @@ impl Operand {
 
     pub fn processor_specific_flag4(&self) -> Option<i8> {
         if self.is_processor_specific() {
-            Some(self.inner.specflag4)
+            Some(as_signed_char(self.inner.specflag4))
         } else {
             None
         }

@@ -112,6 +112,40 @@ pub use plugin::{IDAPlugin, PluginFlags};
 pub use idalib_macros::plugin;
 
 pub type Address = u64;
+
+/// Normalise a C `char` coming back from the SDK to a signed byte.
+///
+/// Plain `char` is signed on x86-64 but unsigned on AArch64, so the generated
+/// bindings type these fields differently per target. Accessors that promise
+/// `i8` go through here to keep one signature on every platform.
+#[inline]
+pub(crate) fn as_signed_char(value: impl Into<i16>) -> i8 {
+    value.into() as i8
+}
+
+#[cfg(test)]
+mod signed_char_tests {
+    use super::as_signed_char;
+
+    /// The bit pattern is what the SDK gave us, whichever way the target's
+    /// `char` is signed, so a byte with the top bit set is a negative `i8`.
+    #[test]
+    fn unsigned_char_keeps_its_bits() {
+        assert_eq!(as_signed_char(0u8), 0);
+        assert_eq!(as_signed_char(0x7fu8), 127);
+        assert_eq!(as_signed_char(0x80u8), -128);
+        assert_eq!(as_signed_char(0xffu8), -1);
+    }
+
+    #[test]
+    fn signed_char_passes_through() {
+        assert_eq!(as_signed_char(0i8), 0);
+        assert_eq!(as_signed_char(127i8), 127);
+        assert_eq!(as_signed_char(-128i8), -128);
+        assert_eq!(as_signed_char(-1i8), -1);
+    }
+}
+
 pub struct AddressFlags<'a> {
     flags: ffi::bytes::flags64_t,
     _marker: PhantomData<&'a IDB>,

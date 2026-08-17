@@ -4,6 +4,7 @@ use std::mem;
 use bitflags::bitflags;
 
 use crate::Address;
+use crate::as_signed_char;
 use crate::ffi::BADADDR;
 use crate::ffi::inf::*;
 use crate::ffi::nalt::*;
@@ -539,7 +540,7 @@ impl<'a> Metadata<'a> {
     }
 
     pub fn nametype(&self) -> i8 {
-        unsafe { idalib_inf_get_nametype() }
+        as_signed_char(unsafe { idalib_inf_get_nametype() })
     }
 
     pub fn short_demnames(&self) -> u32 {
@@ -723,7 +724,7 @@ impl<'a> Metadata<'a> {
     }
 
     pub fn strlit_zeroes(&self) -> i8 {
-        unsafe { idalib_inf_get_strlit_zeroes() }
+        as_signed_char(unsafe { idalib_inf_get_strlit_zeroes() })
     }
 
     pub fn strtype(&self) -> i32 {

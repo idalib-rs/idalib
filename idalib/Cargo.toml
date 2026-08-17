@@ -91,3 +91,8 @@ harness = false
 name = "test_segpref"
 path = "tests/test_segpref.rs"
 harness = false
+
+[[test]]
+name = "test_signed_char"
+path = "tests/test_signed_char.rs"
+harness = false
