@@ -645,6 +645,15 @@ impl Operand {
         }
     }
 
+    /// Get the raw specflag1 for phrase/displ operands.
+    ///
+    /// Prefer [`Operand::addressing_mode`] on x86, where the only defined values are
+    /// 0 (base) and 1 (SIB). Other processor modules assign their own meanings, so
+    /// callers that must distinguish those need the raw value.
+    pub fn specflag1(&self) -> i8 {
+        self.inner.specflag1
+    }
+
     /// Get specflag2 for phrase/displ operands (used for x86 SIB byte base extraction).
     pub fn specflag2(&self) -> i8 {
         self.inner.specflag2
