@@ -29,8 +29,15 @@ struct import_ctx {
 static int import_enum_callback(ea_t ea, const char *name, uval_t ordinal, void *param) {
   import_ctx* ctx = static_cast<import_ctx*>(param);
 
-  ctx->module_names.push_back(rust::String(ctx->current_module_name.c_str()));
-  ctx->import_names.push_back(rust::String(name ? name : ""));
+  try {
+    rust::String mod(ctx->current_module_name.c_str());
+    rust::String func(name ? name : "");
+    ctx->module_names.push_back(std::move(mod));
+    ctx->import_names.push_back(std::move(func));
+  } catch (const std::invalid_argument &) {
+    return 1;
+  }
+
   ctx->addresses.push_back(ea);
   ctx->ordinals.push_back(static_cast<uint32_t>(ordinal));
 
