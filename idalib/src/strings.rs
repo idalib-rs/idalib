@@ -12,6 +12,29 @@ use crate::Address;
 
 pub type StringIndex = usize;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(i32)]
+pub enum StringType {
+    C = 0,
+    C16 = 1,
+    C32 = 2,
+    Pascal = 4,
+    Pascal16 = 5,
+    Pascal32 = 6,
+    Len2 = 8,
+    Len2x16 = 9,
+    Len2x32 = 10,
+    Len4 = 12,
+    Len4x16 = 13,
+    Len4x32 = 14,
+}
+
+impl From<StringType> for i32 {
+    fn from(st: StringType) -> i32 {
+        st as i32
+    }
+}
+
 pub struct StringList<'a> {
     _marker: PhantomData<&'a IDB>,
 }

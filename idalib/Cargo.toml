@@ -25,6 +25,74 @@ cxx = "1"
 idalib-macros = { version = "0.10", path = "../idalib-macros", optional = true }
 idalib-sys = { version = "0.10", path = "../idalib-sys" }
 thiserror = "1"
+ 
+[dev-dependencies]
+tempdir = "0.3"
 
 [build-dependencies]
 idalib-build = { version = "0.10", path = "../idalib-build" }
+
+[[test]]
+name = "test_bytes"
+path = "tests/test_bytes.rs"
+harness = false
+
+[[test]]
+name = "test_heads"
+path = "tests/test_heads.rs"
+harness = false
+
+[[test]]
+name = "test_imports"
+path = "tests/test_imports.rs"
+harness = false
+
+[[test]]
+name = "test_strings"
+path = "tests/test_strings.rs"
+harness = false
+
+[[test]]
+name = "test_xrefs"
+path = "tests/test_xrefs.rs"
+harness = false
+
+[[test]]
+name = "test_instructions"
+path = "tests/test_instructions.rs"
+harness = false
+
+[[test]]
+name = "test_search"
+path = "tests/test_search.rs"
+harness = false
+
+[[test]]
+name = "test_segments"
+path = "tests/test_segments.rs"
+harness = false
+
+[[test]]
+name = "test_x86_operands"
+path = "tests/test_x86_operands.rs"
+harness = false
+
+[[test]]
+name = "test_metadata"
+path = "tests/test_metadata.rs"
+harness = false
+
+[[test]]
+name = "test_open_options"
+path = "tests/test_open_options.rs"
+harness = false
+
+[[test]]
+name = "test_segpref"
+path = "tests/test_segpref.rs"
+harness = false
+
+[[test]]
+name = "test_signed_char"
+path = "tests/test_signed_char.rs"
+harness = false

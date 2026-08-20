@@ -43,3 +43,11 @@ std::uint8_t idalib_segm_perm(const segment_t *s) {
 std::uint8_t idalib_segm_type(const segment_t *s) {
   return s->type;
 }
+
+std::int64_t idalib_get_fileregion_offset(ea_t ea) {
+  return get_fileregion_offset(ea);
+}
+
+ea_t idalib_get_fileregion_ea(std::int64_t offset) {
+  return get_fileregion_ea(offset);
+}

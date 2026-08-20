@@ -4,6 +4,7 @@ use std::mem;
 use bitflags::bitflags;
 
 use crate::Address;
+use crate::as_signed_char;
 use crate::ffi::BADADDR;
 use crate::ffi::inf::*;
 use crate::ffi::nalt::*;
@@ -118,6 +119,29 @@ pub enum Compiler {
     VISAGE = COMP_VISAGE as _,
     BP = COMP_BP as _,
     UNSURE = COMP_UNSURE as _,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[repr(u16)]
+pub enum OSType {
+    LINUX = 0,
+    WIN32 = 1,
+    MAC = 2,
+    UNIX = 3,
+}
+
+impl TryFrom<u16> for OSType {
+    type Error = u16;
+
+    fn try_from(value: u16) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(OSType::LINUX),
+            1 => Ok(OSType::WIN32),
+            2 => Ok(OSType::MAC),
+            3 => Ok(OSType::UNIX),
+            _ => Err(value),
+        }
+    }
 }
 
 pub struct Metadata<'a> {
@@ -243,8 +267,9 @@ impl<'a> Metadata<'a> {
         unsafe { mem::transmute(idalib_inf_get_filetype()) }
     }
 
-    pub fn ostype(&self) -> u16 {
-        unsafe { idalib_inf_get_ostype() }
+    pub fn ostype(&self) -> Option<OSType> {
+        let value = unsafe { idalib_inf_get_ostype() };
+        OSType::try_from(value).ok()
     }
 
     pub fn apptype(&self) -> u16 {
@@ -412,6 +437,10 @@ impl<'a> Metadata<'a> {
         if ea != BADADDR { Some(ea.into()) } else { None }
     }
 
+    pub fn imagebase(&self) -> Address {
+        unsafe { idalib_inf_get_imagebase().into() }
+    }
+
     pub fn start_stack_segment(&self) -> Option<Address> {
         let ea = unsafe { idalib_inf_get_start_ss() };
         if ea != BADADDR { Some(ea.into()) } else { None }
@@ -511,7 +540,7 @@ impl<'a> Metadata<'a> {
     }
 
     pub fn nametype(&self) -> i8 {
-        unsafe { idalib_inf_get_nametype() }
+        as_signed_char(unsafe { idalib_inf_get_nametype() })
     }
 
     pub fn short_demnames(&self) -> u32 {
@@ -695,7 +724,7 @@ impl<'a> Metadata<'a> {
     }
 
     pub fn strlit_zeroes(&self) -> i8 {
-        unsafe { idalib_inf_get_strlit_zeroes() }
+        as_signed_char(unsafe { idalib_inf_get_strlit_zeroes() })
     }
 
     pub fn strtype(&self) -> i32 {
