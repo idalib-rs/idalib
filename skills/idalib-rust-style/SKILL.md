@@ -14,7 +14,7 @@ Follow these instructions strictly to ensure high-quality Rust code:
 
 - Do not use decorations around println, etc.
 
-- Consistentently name types and methods.
+- Consistently name types and methods.
 
 - Provide accessors and mutators for struct fields, avoid `pub` fields. E.g., for a field named `timeout`, provide:
   ```rust
@@ -105,7 +105,7 @@ INCORRECT:
     println!("Hello, {}!", name);
     ```
 
-- DO NOT call FFI functions in methods that operate on an IDB or derived types without binding the owning type to the lifetime of the IDB. For exmaple:
+- DO NOT call FFI functions in methods that operate on an IDB or derived types without binding the owning type to the lifetime of the IDB. For example:
 
 ```rust
 pub struct MyStruct<'a> {
