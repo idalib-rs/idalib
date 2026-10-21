@@ -81,6 +81,10 @@ impl<'a> CFunction<'a> {
     }
 }
 
+impl Drop for CFunction<'_> {
+    fn drop(&mut self) {}
+}
+
 impl<'a> CBlock<'a> {
     pub fn iter(&self) -> CBlockIter<'_> {
         CBlockIter {

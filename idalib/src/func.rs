@@ -277,6 +277,10 @@ impl<'a> Function<'a> {
     }
 }
 
+impl Drop for Function<'_> {
+    fn drop(&mut self) {}
+}
+
 impl<'a> FunctionCFG<'a> {
     unsafe fn as_gdl_graph(&self) -> Option<&gdl_graph_t> {
         self.flow_chart

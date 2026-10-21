@@ -330,3 +330,7 @@ impl<'a> Segment<'a> {
         unsafe { (*self.ptr).is_visible_segm() }
     }
 }
+
+impl Drop for Segment<'_> {
+    fn drop(&mut self) {}
+}
