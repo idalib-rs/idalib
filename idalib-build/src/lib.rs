@@ -25,7 +25,11 @@ pub fn idalib_sdk_paths_with(check: bool) -> (PathBuf, PathBuf, PathBuf, PathBuf
     }
 
     let (stubs_path, idalib, ida) = if cfg!(target_os = "linux") {
-        let path = sdk_path.join("lib/x64_linux_64");
+        let path = if cfg!(target_arch = "aarch64") {
+            sdk_path.join("lib/arm64_linux_64")
+        } else {
+            sdk_path.join("lib/x64_linux_64")
+        };
         let idalib = path.join("libidalib.so");
         let ida = path.join("libida.so");
         (path, idalib, ida)
@@ -39,7 +43,11 @@ pub fn idalib_sdk_paths_with(check: bool) -> (PathBuf, PathBuf, PathBuf, PathBuf
         let ida = path.join("libida.dylib");
         (path, idalib, ida)
     } else if cfg!(target_os = "windows") {
-        let path = sdk_path.join("lib\\x64_win_64");
+        let path = if cfg!(target_arch = "aarch64") {
+            sdk_path.join("lib\\arm64_win_64")
+        } else {
+            sdk_path.join("lib\\x64_win_64")
+        };
         let idalib = path.join("idalib.lib");
         let ida = path.join("ida.lib");
         (path, idalib, ida)
