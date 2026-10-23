@@ -188,11 +188,11 @@ impl Operand {
     }
 
     pub fn offb(&self) -> i8 {
-        self.inner.offb
+        self.inner.offb as _
     }
 
     pub fn offo(&self) -> i8 {
-        self.inner.offo
+        self.inner.offo as _
     }
 
     pub fn n(&self) -> usize {
@@ -292,7 +292,7 @@ impl Operand {
 
     pub fn processor_specific_flag1(&self) -> Option<i8> {
         if self.is_processor_specific() {
-            Some(self.inner.specflag1)
+            Some(self.inner.specflag1 as _)
         } else {
             None
         }
@@ -300,7 +300,7 @@ impl Operand {
 
     pub fn processor_specific_flag2(&self) -> Option<i8> {
         if self.is_processor_specific() {
-            Some(self.inner.specflag2)
+            Some(self.inner.specflag2 as _)
         } else {
             None
         }
@@ -308,7 +308,7 @@ impl Operand {
 
     pub fn processor_specific_flag3(&self) -> Option<i8> {
         if self.is_processor_specific() {
-            Some(self.inner.specflag3)
+            Some(self.inner.specflag3 as _)
         } else {
             None
         }
@@ -316,7 +316,7 @@ impl Operand {
 
     pub fn processor_specific_flag4(&self) -> Option<i8> {
         if self.is_processor_specific() {
-            Some(self.inner.specflag4)
+            Some(self.inner.specflag4 as _)
         } else {
             None
         }

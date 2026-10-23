@@ -167,6 +167,41 @@ in [the cargo documentation](https://doc.rust-lang.org/cargo/reference/build-scr
 > out in crates.io crates are not emitted by default. The -vv “very verbose”
 > flag may be used to have Cargo display warnings for all crates.
 
+### Cross-compiling
+
+The build scripts select the IDA SDK configuration and stub libraries based on
+the target passed via `cargo build --target ...`, not on the host running the
+build. In addition to the Rust target (`rustup target add ...`), cross-compiling
+requires:
+
+- A C++ compiler and linker for the target, as picked up by the
+  [cc](https://docs.rs/cc) crate (e.g., via `CXX_<target>`) and Cargo (via
+  `CARGO_TARGET_<TRIPLE>_LINKER`).
+- The target's C++ standard library headers, so that Clang can parse the SDK
+  headers. If they are not found automatically, pass a sysroot via
+  `BINDGEN_EXTRA_CLANG_ARGS_<target>="--sysroot=..."`.
+- When using `idalib_build::configure_linkage`, `IDADIR` set to an IDA
+  installation for the target: it must contain the target's `(lib)idalib` at
+  build time, and it is used as the RPATH at runtime, so a copy at the same
+  path as on the target machine works best. Alternatively, use the `build.rs`
+  above, which falls back to the SDK stub libraries; in that case, IDA's
+  libraries must be made available to the dynamic linker on the target machine
+  at runtime (e.g., with `LD_LIBRARY_PATH=$HOME/ida-pro-9.4` or similar).
+
+For example, to build for Linux AArch64 on Linux x86_64 (Ubuntu):
+
+```sh
+sudo apt install g++-aarch64-linux-gnu
+rustup target add aarch64-unknown-linux-gnu
+
+export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc
+cargo build --target aarch64-unknown-linux-gnu
+```
+
+Cross-compiling to Windows from other platforms requires an MSVC-compatible
+toolchain (e.g., [cargo-xwin](https://github.com/rust-cross/cargo-xwin)) and
+has not been tested.
+
 ## Extending idalib
 
 To expose unimplemented IDA SDK functionality, modify the `idasdk-sys` crate,
