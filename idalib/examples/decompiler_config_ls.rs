@@ -8,14 +8,11 @@ fn main() -> anyhow::Result<()> {
         return Ok(());
     }
 
-    let Some((_, main)) = idb
+    let main_ea = idb
         .functions()
         .find(|(_, f)| f.name().as_deref() == Some("main"))
-    else {
-        println!("main function not found");
-        return Ok(());
-    };
-    let main_ea = main.start_address();
+        .map(|(_, f)| f.start_address())
+        .ok_or_else(|| anyhow::anyhow!("main function not found"))?;
 
     let steps = [
         ("default config", None),

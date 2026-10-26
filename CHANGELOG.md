@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.11.0 (2026-10-26)
+
+Features:
+- Compatibility with IDA 9.5.
+- Use IDA's official license management API for validity and ID queries.
+- Enable batch mode on Windows.
+
+Bugfix:
+- Ensure correct drop order of objects borrowed from the IDB (contributor:
+  [@0xdea](https://github.com/0xdea)).
+
 ## 0.10.1 (2026-09-11)
 
 Features:

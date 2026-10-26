@@ -488,6 +488,7 @@ pub mod hexrays {
         Stop,
         Cloud,
         Loop,
+        Timeout,
         Unknown,
     }
 
@@ -541,6 +542,7 @@ pub mod hexrays {
                 merror_t::MERR_STOP => Self::Stop,
                 merror_t::MERR_CLOUD => Self::Cloud,
                 merror_t::MERR_LOOP => Self::Loop,
+                merror_t::MERR_TIMEOUT => Self::Timeout,
                 _ => Self::Unknown,
             }
         }
@@ -839,6 +841,7 @@ mod ffix {
         unsafe fn idalib_create_plugmod(pm: Box<PlugMod>) -> *mut plugmod_t;
 
         unsafe fn init_library(argc: c_int, argv: *mut *mut c_char) -> c_int;
+        unsafe fn idalib_force_batch_mode();
 
         unsafe fn idalib_open_database_quiet(
             argc: c_int,
@@ -1336,6 +1339,10 @@ pub mod ida {
 
     pub use ffi::auto_wait;
     pub use ffix::idalib_msg;
+
+    pub fn force_batch_mode() {
+        unsafe { ffix::idalib_force_batch_mode() }
+    }
 
     pub unsafe fn msg(msg: impl AsRef<str>) -> Result<(), IDAError> {
         let msg = CString::new(msg.as_ref()).map_err(IDAError::ffi)?;
