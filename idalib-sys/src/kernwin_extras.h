@@ -63,6 +63,10 @@ bool idalib_check_license() {
   return result == 0 && license.valid();
 }
 
+bool idalib_is_decompiler_available() {
+  return License().decompiler_available();
+}
+
 bool idalib_get_license_id(std::array<uint8_t, 6> &id) {
   if (!idalib_check_license()) {
     return false;

@@ -850,6 +850,7 @@ mod ffix {
         ) -> c_int;
         unsafe fn idalib_check_license() -> bool;
         unsafe fn idalib_get_license_id(id: &mut [u8; 6]) -> bool;
+        unsafe fn idalib_is_decompiler_available() -> bool;
 
         // NOTE: we can't use uval_t here due to it resolving to c_ulonglong,
         // which causes `verify_extern_type` to fail...
@@ -1357,6 +1358,15 @@ pub mod ida {
         );
 
         unsafe { ffix::idalib_check_license() }
+    }
+
+    pub fn is_decompiler_available() -> bool {
+        assert!(
+            is_main_thread(),
+            "IDA cannot function correctly when not running on the main thread"
+        );
+
+        unsafe { ffix::idalib_is_decompiler_available() }
     }
 
     pub fn license_id() -> Result<[u8; 6], IDAError> {
