@@ -3,26 +3,61 @@ use std::path::{Path, PathBuf};
 
 use autocxx_bindgen::Builder as BindgenBuilder;
 
-fn configure_and_generate(builder: BindgenBuilder, ida: &Path, output: impl AsRef<Path>) {
+/// Returns the OS of the target being built (e.g., `linux`).
+fn target_os() -> String {
+    env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS should be set")
+}
+
+/// Returns the architecture of the target being built (e.g., `aarch64`).
+fn target_arch() -> String {
+    env::var("CARGO_CFG_TARGET_ARCH").expect("CARGO_CFG_TARGET_ARCH should be set")
+}
+
+/// Returns the IDA SDK platform macros (each defined as `1`) for target `os` and `arch`.
+fn sdk_defines(os: &str, arch: &str) -> Vec<&'static str> {
+    let mut defines = vec![match os {
+        "linux" => "__LINUX__",
+        "macos" => "__MACOS__",
+        "windows" => "__NT__",
+        _ => panic!("unsupported platform"),
+    }];
+
+    if arch == "aarch64" {
+        defines.push("__ARM__");
+    }
+
+    defines.push("__EA64__");
+    defines
+}
+
+/// Returns the clang arguments for parsing the IDA SDK headers for target `os` and `arch`.
+fn sdk_clang_args(os: &str, arch: &str) -> Vec<String> {
+    let mut args = vec!["-std=c++17".to_owned()];
+
+    args.extend(
+        sdk_defines(os, arch)
+            .into_iter()
+            .map(|name| format!("-D{name}=1")),
+    );
+
+    if os == "windows" {
+        args.push("-D_CRT_USE_BUILTIN_OFFSETOF".to_owned());
+    }
+
+    args
+}
+
+fn configure_and_generate(
+    builder: BindgenBuilder,
+    ida: &Path,
+    clang_args: &[String],
+    output: impl AsRef<Path>,
+) {
     let rs = PathBuf::from(env::var("OUT_DIR").unwrap()).join(output.as_ref());
     let bindings = builder
         .clang_arg("-xc++")
         .clang_arg(format!("-I{}", ida.display()))
-        .clang_args(
-            #[cfg(target_os = "linux")]
-            &["-std=c++17", "-D__LINUX__=1", "-D__EA64__=1"],
-            #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-            &["-std=c++17", "-D__MACOS__=1", "-D__ARM__=1", "-D__EA64__=1"],
-            #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
-            &["-std=c++17", "-D__MACOS__=1", "-D__EA64__=1"],
-            #[cfg(target_os = "windows")]
-            &[
-                "-std=c++17",
-                "-D__NT__=1",
-                "-D__EA64__=1",
-                "-D_CRT_USE_BUILTIN_OFFSETOF",
-            ],
-        )
+        .clang_args(clang_args)
         .respect_cxx_access_specs(true)
         .generate()
         .expect("generate bindings");
@@ -40,59 +75,28 @@ fn main() {
 
     cxx_build::CFG.exported_header_dirs.push(&ida);
 
+    let os = target_os();
+    let arch = target_arch();
+    let clang_args = sdk_clang_args(&os, &arch);
+
     let mut builder = autocxx_build::Builder::new(ffi_path.join("lib.rs"), [ffi_path, &*ida])
-        .extra_clang_args(
-            #[cfg(target_os = "linux")]
-            &["-std=c++17", "-D__LINUX__=1", "-D__EA64__=1"],
-            #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-            &["-std=c++17", "-D__MACOS__=1", "-D__ARM__=1", "-D__EA64__=1"],
-            #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
-            &["-std=c++17", "-D__MACOS__=1", "-D__EA64__=1"],
-            #[cfg(target_os = "windows")]
-            &[
-                "-std=c++17",
-                "-D__NT__=1",
-                "-D__EA64__=1",
-                "-D_CRT_USE_BUILTIN_OFFSETOF",
-            ],
-        )
+        .extra_clang_args(&clang_args.iter().map(String::as_str).collect::<Vec<_>>())
         .build()
         .expect("parsed correctly");
 
-    #[cfg(target_os = "linux")]
-    {
-        builder
-            .cargo_warnings(false)
-            .flag_if_supported("-std=c++17")
-            .define("__LINUX__", "1")
-            .define("__EA64__", "1")
-            .compile("libida-stubs");
+    let stubs = builder.cargo_warnings(false);
+
+    if os == "windows" {
+        stubs.cpp(true).std("c++17");
+    } else {
+        stubs.flag_if_supported("-std=c++17");
     }
 
-    #[cfg(target_os = "macos")]
-    {
-        let b = builder
-            .cargo_warnings(false)
-            .flag_if_supported("-std=c++17")
-            .define("__MACOS__", "1")
-            .define("__EA64__", "1");
-
-        #[cfg(target_arch = "aarch64")]
-        let b = b.define("__ARM__", "1");
-
-        b.compile("libida-stubs");
+    for name in sdk_defines(&os, &arch) {
+        stubs.define(name, "1");
     }
 
-    #[cfg(target_os = "windows")]
-    {
-        builder
-            .cargo_warnings(false)
-            .cpp(true)
-            .std("c++17")
-            .define("__NT__", "1")
-            .define("__EA64__", "1")
-            .compile("libida-stubs");
-    }
+    stubs.compile("libida-stubs");
 
     let pod = autocxx_bindgen::builder()
         .header(ida.join("pro.h").to_str().expect("path is valid string"))
@@ -102,14 +106,14 @@ fn main() {
         .allowlist_type("optype_t")
         .allowlist_item("OF_.*");
 
-    configure_and_generate(pod, &ida, "pod.rs");
+    configure_and_generate(pod, &ida, &clang_args, "pod.rs");
 
     let idp = autocxx_bindgen::builder()
         .header(ida.join("pro.h").to_str().expect("path is valid string"))
         .header(ida.join("idp.hpp").to_str().expect("path is valid string"))
         .allowlist_item("PLFM_.*");
 
-    configure_and_generate(idp, &ida, "idp.rs");
+    configure_and_generate(idp, &ida, &clang_args, "idp.rs");
 
     let inf = autocxx_bindgen::builder()
         .header(ida.join("pro.h").to_str().expect("path is valid string"))
@@ -129,7 +133,7 @@ fn main() {
         .allowlist_item("SW_.*")
         .allowlist_item("compiler_info_t");
 
-    configure_and_generate(inf, &ida, "inf.rs");
+    configure_and_generate(inf, &ida, &clang_args, "inf.rs");
 
     let insn_consts = [
         ("ARM_.*", "insn_arm.rs"),
@@ -138,7 +142,7 @@ fn main() {
     ];
 
     for (prefix, output) in insn_consts {
-        let arch = autocxx_bindgen::builder()
+        let insn = autocxx_bindgen::builder()
             .header(ida.join("pro.h").to_str().expect("path is valid string"))
             .header(
                 ida.join("allins.hpp")
@@ -148,7 +152,7 @@ fn main() {
             .clang_arg("-fshort-enums")
             .allowlist_item(prefix);
 
-        configure_and_generate(arch, &ida, output);
+        configure_and_generate(insn, &ida, &clang_args, output);
     }
 
     let hexrays = autocxx_bindgen::builder()
@@ -161,7 +165,7 @@ fn main() {
         .allowlist_item("CV_.*")
         .allowlist_item("DECOMP_.*");
 
-    configure_and_generate(hexrays, &ida, "hexrays.rs");
+    configure_and_generate(hexrays, &ida, &clang_args, "hexrays.rs");
 
     let plugin = autocxx_bindgen::builder()
         .header(ida.join("pro.h").to_str().expect("path is valid string"))
@@ -173,7 +177,7 @@ fn main() {
         .allowlist_item("plugmod_t")
         .allowlist_item("plugin_t");
 
-    configure_and_generate(plugin, &ida, "plugin.rs");
+    configure_and_generate(plugin, &ida, &clang_args, "plugin.rs");
 
     println!("cargo::metadata=sdk={}", sdk_path.display());
 
