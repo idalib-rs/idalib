@@ -40,6 +40,6 @@ objc2 = "0.6"
 windows-sys = { version = "0.59.0", features = ["Win32_System_Threading"] }
 
 [build-dependencies]
-autocxx-bindgen = { version = "0.73", package = "autocxx-bindgen-idalib" }
+autocxx-bindgen = { version = "0.73.1", package = "autocxx-bindgen-idalib" }
 autocxx-build = { version = "0.30", package = "autocxx-build-idalib" }
 cxx-build = "1"

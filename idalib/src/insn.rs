@@ -115,6 +115,7 @@ bitflags! {
 }
 
 pub type InsnType = u16;
+const _: [InsnType; 3] = [arm::ARM_null, mips::MIPS_null, x86::NN_null];
 
 impl Insn {
     pub(crate) fn from_repr(inner: insn_t) -> Self {

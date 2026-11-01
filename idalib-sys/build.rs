@@ -2,6 +2,7 @@ use std::env;
 use std::path::{Path, PathBuf};
 
 use autocxx_bindgen::Builder as BindgenBuilder;
+use autocxx_bindgen::callbacks::{IntKind, ParseCallbacks};
 
 /// Returns the OS of the target being built (e.g., `linux`).
 fn target_os() -> String {
@@ -45,6 +46,15 @@ fn sdk_clang_args(os: &str, arch: &str) -> Vec<String> {
     }
 
     args
+}
+
+#[derive(Debug)]
+struct InstructionEnumCallbacks;
+
+impl ParseCallbacks for InstructionEnumCallbacks {
+    fn enum_type_override(&self, _: &str) -> Option<IntKind> {
+        Some(IntKind::U16)
+    }
 }
 
 fn configure_and_generate(
@@ -150,6 +160,7 @@ fn main() {
                     .expect("path is a valid string"),
             )
             .clang_arg("-fshort-enums")
+            .parse_callbacks(Box::new(InstructionEnumCallbacks))
             .allowlist_item(prefix);
 
         configure_and_generate(insn, &ida, &clang_args, output);
