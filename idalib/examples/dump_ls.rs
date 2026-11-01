@@ -1,10 +1,13 @@
+use std::{env, fs};
+
 use idalib::IDAError;
 use idalib::func::FunctionFlags;
 use idalib::idb::*;
 
 fn main() -> anyhow::Result<()> {
+    let idb_path = env::temp_dir().join(format!("idalib-dump-ls-{}.i64", std::process::id()));
     let idb = IDBOpenOptions::new()
-        .idb("/tmp/out.idb")
+        .idb(&idb_path)
         .save(true)
         .open("./tests/ls")?;
 
@@ -116,6 +119,10 @@ fn main() -> anyhow::Result<()> {
             );
         }
     }
+
+    drop(idb);
+
+    fs::remove_file(idb_path)?;
 
     Ok(())
 }
