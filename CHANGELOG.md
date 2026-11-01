@@ -1,15 +1,22 @@
 # Changelog
 
-## 0.11.0 (2026-10-26)
+## 0.11.0 (2026-11-01)
 
 Features:
 - Compatibility with IDA 9.5.
-- Use IDA's official license management API for validity and ID queries.
+- Use IDA's official license management API for validity, ID, and decompiler
+  availability queries.
 - Enable batch mode on Windows.
+- Support Linux and Windows ARM64 targets and host-to-target cross-compilation
+  (contributor: [@0xdea](https://github.com/0xdea)).
 
-Bugfix:
+Bugfixes:
 - Ensure correct drop order of objects borrowed from the IDB (contributor:
   [@0xdea](https://github.com/0xdea)).
+- Keep `c_char` conversions internal so public byte-oriented APIs remain
+  portable.
+- Generate processor-specific instruction constants with the same `u16` type
+  as `InsnType`.
 
 ## 0.10.1 (2026-09-11)
 
