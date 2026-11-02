@@ -10,10 +10,10 @@
 //!
 //! ```toml
 //! [dependencies]
-//! idalib = "0.10"
+//! idalib = "0.11"
 //!
 //! [build-dependencies]
-//! idalib-build = "0.10"
+//! idalib-build = "0.11"
 //! ```
 //!
 //! Here is a basic example of a `build.rs` file:
@@ -201,19 +201,11 @@ impl IDAVersion {
 
 static INIT: OnceLock<Mutex<()>> = OnceLock::new();
 
-#[cfg(not(any(target_os = "windows", feature = "plugin")))]
-unsafe extern "C" {
-    static mut batch: std::ffi::c_char;
-}
-
 pub(crate) type IDARuntimeHandle = MutexGuard<'static, ()>;
 
 #[cfg(not(feature = "plugin"))]
 pub fn force_batch_mode() {
-    #[cfg(not(target_os = "windows"))]
-    unsafe {
-        batch = 1;
-    }
+    ffi::ida::force_batch_mode();
 }
 
 #[cfg(feature = "plugin")]

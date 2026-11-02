@@ -4,6 +4,8 @@ use std::mem::MaybeUninit;
 #[cfg(not(feature = "plugin"))]
 use std::path::{Path, PathBuf};
 
+use crate::bookmarks::Bookmarks;
+use crate::decompiler::CFunction;
 use crate::ffi::BADADDR;
 use crate::ffi::bytes::*;
 use crate::ffi::comments::{append_cmt, idalib_get_cmt, set_cmt};
@@ -17,7 +19,7 @@ use crate::ffi::hexrays::term_hexrays_plugin;
 use crate::ffi::hexrays::{change_hexrays_config, decompile_function, init_hexrays_plugin};
 #[cfg(not(feature = "plugin"))]
 use crate::ffi::ida::{auto_wait, close_database_with, open_database_quiet};
-use crate::ffi::ida::{make_signatures, set_screen_ea};
+use crate::ffi::ida::{is_decompiler_available, make_signatures, set_screen_ea};
 use crate::ffi::insn::decode;
 use crate::ffi::plugin::find_plugin;
 use crate::ffi::processor::get_ph;
@@ -26,9 +28,6 @@ use crate::ffi::segment::{get_segm_by_name, get_segm_qty, getnseg, getseg};
 use crate::ffi::typeinf::{idalib_format_cfunc_decls, idalib_format_decls};
 use crate::ffi::util::{get_imagebase, is_align_insn, next_head, prev_head, str2reg};
 use crate::ffi::xref::{xrefblk_t, xrefblk_t_first_from, xrefblk_t_first_to};
-
-use crate::bookmarks::Bookmarks;
-use crate::decompiler::CFunction;
 use crate::func::{Function, FunctionId};
 use crate::insn::{Insn, Register};
 use crate::meta::{Metadata, MetadataMut};
@@ -146,7 +145,7 @@ impl IDB {
 
         open_database_quiet(path, auto_analyse, args)?;
 
-        let decompiler = unsafe { init_hexrays_plugin(0.into()) };
+        let decompiler = is_decompiler_available() && unsafe { init_hexrays_plugin(0.into()) };
 
         Ok(Self {
             path: path.to_owned(),
@@ -162,7 +161,7 @@ impl IDB {
         let _guard = prepare_library();
 
         Ok(Self {
-            decompiler: unsafe { init_hexrays_plugin(0.into()) },
+            decompiler: is_decompiler_available() && unsafe { init_hexrays_plugin(0.into()) },
             _guard,
             _marker: PhantomData,
         })

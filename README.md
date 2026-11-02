@@ -1,7 +1,7 @@
 # idalib
 
 [![crates.io](https://img.shields.io/crates/v/idalib)](https://crates.io/crates/idalib)
-[![documentation](https://img.shields.io/badge/documentation-0.10.1%2B9.4.260714-blue?link=https%3A%2F%2Fidalib.rs%2Fidalib)](https://idalib.rs/idalib/)
+[![documentation](https://img.shields.io/badge/documentation-0.11.0%2B9.5.261026-blue?link=https%3A%2F%2Fidalib.rs%2Fidalib)](https://idalib.rs/idalib/)
 [![license](https://img.shields.io/crates/l/idalib)](https://github.com/idalib-rs/idalib)
 [![crates.io downloads](https://img.shields.io/crates/d/idalib)](https://crates.io/crates/idalib)
 
@@ -10,13 +10,13 @@ analysis tools using IDA v9.x’s idalib.
 
 ## IDA support and dependencies
 
-The bindings and examples have been tested against IDA Pro v9.4 on Windows
-(11), Linux (Ubuntu 24.04 LTS), and macOS Sequoia (Apple Silicon). The latest
-bindings are only guaranteed compatible with the latest official IDA Pro/SDK
-release. See the table below for compatibility:
+The bindings and examples support IDA Pro v9.5 on Windows, Linux, and macOS
+(Apple Silicon). The latest bindings are only guaranteed compatible with the
+latest official IDA Pro/SDK release. See the table below for compatibility:
 
 | IDA Pro version | Latest compatible idalib |
 | --------------- | ------------------------ |
+| v9.5            | 0.11.0                   |
 | v9.4            | 0.10.1                   |
 | v9.3sp1         | 0.9.0                    |
 | v9.3            | 0.8.1                    |
@@ -63,10 +63,10 @@ name = "example-analyser"
 # ...
 
 [dependencies]
-idalib = "0.10"
+idalib = "0.11"
 
 [build-dependencies]
-idalib-build = "0.10"
+idalib-build = "0.11"
 ```
 
 `build.rs`:
@@ -103,8 +103,8 @@ cargo run --example=dump_ls
 Windows:
 
 ```powershell
-$env:PATH="C:\Program Files\IDA Professional 9.4;$env:PATH"
-$env:IDADIR="C:\Program Files\IDA Professional 9.4"
+$env:PATH="C:\Program Files\IDA Professional 9.5;$env:PATH"
+$env:IDADIR="C:\Program Files\IDA Professional 9.5"
 
 cargo run --example=dump_ls
 ```
@@ -166,6 +166,41 @@ in [the cargo documentation](https://doc.rust-lang.org/cargo/reference/build-scr
 > (that is, those you’re working on locally), so for example warnings printed
 > out in crates.io crates are not emitted by default. The -vv “very verbose”
 > flag may be used to have Cargo display warnings for all crates.
+
+### Cross-compiling
+
+The build scripts select the IDA SDK configuration and stub libraries based on
+the target passed via `cargo build --target ...`, not on the host running the
+build. In addition to the Rust target (`rustup target add ...`), cross-compiling
+requires:
+
+- A C++ compiler and linker for the target, as picked up by the
+  [cc](https://docs.rs/cc) crate (e.g., via `CXX_<target>`) and Cargo (via
+  `CARGO_TARGET_<TRIPLE>_LINKER`).
+- The target's C++ standard library headers, so that Clang can parse the SDK
+  headers. If they are not found automatically, pass a sysroot via
+  `BINDGEN_EXTRA_CLANG_ARGS_<target>="--sysroot=..."`.
+- When using `idalib_build::configure_linkage`, `IDADIR` set to an IDA
+  installation for the target: it must contain the target's `(lib)idalib` at
+  build time, and it is used as the RPATH at runtime, so a copy at the same
+  path as on the target machine works best. Alternatively, use the `build.rs`
+  above, which falls back to the SDK stub libraries; in that case, IDA's
+  libraries must be made available to the dynamic linker on the target machine
+  at runtime (e.g., with `LD_LIBRARY_PATH=$HOME/ida-pro-9.5` or similar).
+
+For example, to build for Linux AArch64 on Linux x86_64 (Ubuntu):
+
+```sh
+sudo apt install g++-aarch64-linux-gnu
+rustup target add aarch64-unknown-linux-gnu
+
+export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc
+cargo build --target aarch64-unknown-linux-gnu
+```
+
+Cross-compiling to Windows from other platforms requires an MSVC-compatible
+toolchain (e.g., [cargo-xwin](https://github.com/rust-cross/cargo-xwin)) and
+has not been tested.
 
 ## Extending idalib
 
