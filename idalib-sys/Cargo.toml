@@ -18,9 +18,11 @@ include = [
   "/src",
   "/sdk/src/include",
   "/sdk/src/lib/x64_linux_64/*.so",
-  "/sdk/src/lib/x64_mac_64/*.dylib",
-  "/sdk/src/lib/arm64_mac_64/*.dylib",
+  "/sdk/src/lib/arm64_linux_64/*.so",
+  "/sdk/src/lib/x64_mac_64/*.tbd",
+  "/sdk/src/lib/arm64_mac_64/*.tbd",
   "/sdk/src/lib/x64_win_64/*.lib",
+  "/sdk/src/lib/arm64_win_64/*.lib",
 ]
 
 [dependencies]
