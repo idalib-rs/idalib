@@ -2,7 +2,7 @@
 // verbatim by default (`GarbleNames = 0` in `ida.cfg`), so that the decompiler
 // wraps them in backticks (e.g., `#memcpy` in ARM64EC binaries).
 //
-// Build: cc -arch arm64 -O0 -o garble_names garble_names.c
+// Build: cc -arch x86_64 -O0 -o garble_names garble_names.c
 
 int hash_name(int x) __asm__("_has#hash");
 int space_name(int x) __asm__("_has space");
