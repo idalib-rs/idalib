@@ -19,7 +19,9 @@ use crate::ffi::hexrays::term_hexrays_plugin;
 use crate::ffi::hexrays::{change_hexrays_config, decompile_function, init_hexrays_plugin};
 #[cfg(not(feature = "plugin"))]
 use crate::ffi::ida::{auto_wait, close_database_with, open_database_quiet};
-use crate::ffi::ida::{is_decompiler_available, make_signatures, set_screen_ea};
+use crate::ffi::ida::{
+    idalib_process_config_directive, is_decompiler_available, make_signatures, set_screen_ea,
+};
 use crate::ffi::insn::decode;
 use crate::ffi::plugin::find_plugin;
 use crate::ffi::processor::get_ph;
@@ -236,6 +238,12 @@ impl IDB {
                 "failed to apply hexrays config directive `{directive}`"
             )))
         }
+    }
+
+    pub fn modify_ida_config(&mut self, directive: impl AsRef<str>) -> Result<(), IDAError> {
+        let s = CString::new(directive.as_ref()).map_err(IDAError::ffi)?;
+        unsafe { idalib_process_config_directive(s.as_ptr()) };
+        Ok(())
     }
 
     pub fn meta(&self) -> Metadata<'_> {
