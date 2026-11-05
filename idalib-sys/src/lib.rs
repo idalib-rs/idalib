@@ -1123,6 +1123,8 @@ mod ffix {
             build: *mut c_int,
         ) -> bool;
 
+        unsafe fn idalib_process_config_directive(directive: *const c_char);
+
         unsafe fn idalib_format_decls(flags: u32) -> Result<String>;
 
         unsafe fn idalib_format_cfunc_decls(cfunc: *mut cfunc_t, flags: u32) -> Result<String>;
@@ -1339,7 +1341,7 @@ pub mod ida {
     use super::{IDAError, ea_t, ffi, ffix};
 
     pub use ffi::auto_wait;
-    pub use ffix::idalib_msg;
+    pub use ffix::{idalib_msg, idalib_process_config_directive};
 
     pub fn force_batch_mode() {
         unsafe { ffix::idalib_force_batch_mode() }
