@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.11.1 (2026-11-05)
+
+Features:
+- Add support for applying `ida.cfg` directives (contributor:
+  [@0xdea](https://github.com/0xdea)).
+
 ## 0.11.0 (2026-11-01)
 
 Features:

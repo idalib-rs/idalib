@@ -10,10 +10,10 @@
 //!
 //! ```toml
 //! [dependencies]
-//! idalib = "0.11"
+//! idalib = "0.11.1"
 //!
 //! [build-dependencies]
-//! idalib-build = "0.11"
+//! idalib-build = "0.11.1"
 //! ```
 //!
 //! Here is a basic example of a `build.rs` file:
