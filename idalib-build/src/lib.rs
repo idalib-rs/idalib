@@ -83,6 +83,7 @@ pub fn idalib_library_paths_with(check: bool) -> (PathBuf, PathBuf) {
 }
 
 fn configure_linkage_aux(path: &Path) {
+    println!("cargo::rerun-if-env-changed=IDADIR");
     println!("cargo::rustc-link-search=native={}", path.display());
     if target_os() == "windows" {
         // .lib
@@ -118,6 +119,8 @@ pub fn configure_linkage() -> anyhow::Result<()> {
         configure_idasdk_linkage();
         return Ok(());
     }
+
+    println!("cargo::rerun-if-env-changed=IDADIR");
 
     let (install_path, _, _) = idalib_install_paths();
     let (_, stub_path, _, _) = idalib_sdk_paths();
