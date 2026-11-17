@@ -1081,6 +1081,25 @@ mod ffix {
         unsafe fn idalib_segm_type(s: *const segment_t) -> u8;
 
         unsafe fn idalib_get_cmt(ea: c_ulonglong, rptble: bool) -> String;
+        unsafe fn idalib_get_extra_cmt(
+            ea: c_ulonglong,
+            anterior: bool,
+            idx: usize,
+            out: &mut String,
+        ) -> bool;
+        unsafe fn idalib_set_extra_cmt(
+            ea: c_ulonglong,
+            anterior: bool,
+            idx: usize,
+            cmt: *const c_char,
+        ) -> bool;
+        unsafe fn idalib_append_extra_cmt(
+            ea: c_ulonglong,
+            anterior: bool,
+            cmt: *const c_char,
+        ) -> bool;
+        unsafe fn idalib_remove_extra_cmt(ea: c_ulonglong, anterior: bool, idx: usize) -> bool;
+        unsafe fn idalib_remove_extra_cmts(ea: c_ulonglong, anterior: bool);
 
         unsafe fn idalib_bookmarks_t_mark(
             ea: c_ulonglong,
@@ -1285,7 +1304,10 @@ pub mod xref {
 
 pub mod comments {
     pub use super::ffi::{append_cmt, set_cmt};
-    pub use super::ffix::idalib_get_cmt;
+    pub use super::ffix::{
+        idalib_append_extra_cmt, idalib_get_cmt, idalib_get_extra_cmt, idalib_remove_extra_cmt,
+        idalib_remove_extra_cmts, idalib_set_extra_cmt,
+    };
 }
 
 pub mod conversions {
