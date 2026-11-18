@@ -8,7 +8,10 @@ use crate::bookmarks::Bookmarks;
 use crate::decompiler::CFunction;
 use crate::ffi::BADADDR;
 use crate::ffi::bytes::*;
-use crate::ffi::comments::{append_cmt, idalib_get_cmt, set_cmt};
+use crate::ffi::comments::{
+    append_cmt, idalib_append_extra_cmt, idalib_get_cmt, idalib_get_extra_cmt,
+    idalib_remove_extra_cmt, idalib_remove_extra_cmts, idalib_set_extra_cmt, set_cmt,
+};
 use crate::ffi::conversions::idalib_ea2str;
 use crate::ffi::entry::{get_entry, get_entry_ordinal, get_entry_qty};
 use crate::ffi::func::{
@@ -113,6 +116,18 @@ impl IDBOpenOptions {
         }
 
         IDB::open_full_with(path, self.auto_analyse, self.save, &args)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ExtraCmtKind {
+    Anterior,
+    Posterior,
+}
+
+impl ExtraCmtKind {
+    fn is_anterior(self) -> bool {
+        self == Self::Anterior
     }
 }
 
@@ -558,6 +573,80 @@ impl IDB {
                 "failed to remove comment at {ea:#x}"
             )))
         }
+    }
+
+    pub fn extra_cmts<'a>(
+        &'a self,
+        ea: Address,
+        kind: ExtraCmtKind,
+    ) -> impl Iterator<Item = String> + 'a {
+        // Ends by index 1000 at the latest, where `get_extra_cmt` returns `None`.
+        (0..).map_while(move |idx| self.get_extra_cmt(ea, kind, idx))
+    }
+
+    pub fn get_extra_cmt(&self, ea: Address, kind: ExtraCmtKind, idx: usize) -> Option<String> {
+        let mut s = String::new();
+        if unsafe { idalib_get_extra_cmt(ea.into(), kind.is_anterior(), idx, &mut s) } {
+            Some(s)
+        } else {
+            None
+        }
+    }
+
+    pub fn set_extra_cmt(
+        &self,
+        ea: Address,
+        kind: ExtraCmtKind,
+        idx: usize,
+        comm: impl AsRef<str>,
+    ) -> Result<(), IDAError> {
+        let s = CString::new(comm.as_ref()).map_err(IDAError::ffi)?;
+        // A line set past the first missing one is hidden until the gap is filled.
+        if unsafe { idalib_set_extra_cmt(ea.into(), kind.is_anterior(), idx, s.as_ptr()) } {
+            Ok(())
+        } else {
+            Err(IDAError::ffi_with(format!(
+                "failed to set extra comment {idx} at {ea:#x}"
+            )))
+        }
+    }
+
+    pub fn append_extra_cmt(
+        &self,
+        ea: Address,
+        kind: ExtraCmtKind,
+        comm: impl AsRef<str>,
+    ) -> Result<(), IDAError> {
+        let s = CString::new(comm.as_ref()).map_err(IDAError::ffi)?;
+        // IDA prefixes each line with the processor's comment marker (e.g., `; `)
+        if unsafe { idalib_append_extra_cmt(ea.into(), kind.is_anterior(), s.as_ptr()) } {
+            Ok(())
+        } else {
+            Err(IDAError::ffi_with(format!(
+                "failed to append extra comment at {ea:#x}"
+            )))
+        }
+    }
+
+    pub fn remove_extra_cmt(
+        &self,
+        ea: Address,
+        kind: ExtraCmtKind,
+        idx: usize,
+    ) -> Result<(), IDAError> {
+        // The lines after the removed one are kept but hidden until the gap is filled.
+        if unsafe { idalib_remove_extra_cmt(ea.into(), kind.is_anterior(), idx) } {
+            Ok(())
+        } else {
+            Err(IDAError::ffi_with(format!(
+                "failed to remove extra comment {idx} at {ea:#x}"
+            )))
+        }
+    }
+
+    pub fn remove_extra_cmts(&self, ea: Address, kind: ExtraCmtKind) {
+        // Also removes hidden lines after a gap, if any.
+        unsafe { idalib_remove_extra_cmts(ea.into(), kind.is_anterior()) }
     }
 
     pub fn bookmarks(&self) -> Bookmarks<'_> {
