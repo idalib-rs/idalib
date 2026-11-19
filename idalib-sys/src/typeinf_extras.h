@@ -19,10 +19,16 @@ struct idalib_string_sink_t : text_sink_t {
 };
 
 // Call `print_decls()` with the current IDB's type library (`get_idati()`).
-// Return the declarations as a string.
+// Return the declarations as a string, empty if the type library has no types.
 //
 // Throw if `print_decls()` signals a hard failure (return value == 0).
 rust::String idalib_format_decls(uint32 flags) {
+  // `print_decls()` also returns 0 when there is nothing to export, so check
+  // for an empty type library first.
+  if (get_ordinal_count(get_idati()) == 0) {
+    return rust::String();
+  }
+
   idalib_string_sink_t sink;
   int result = print_decls(sink, get_idati(), nullptr, flags);
   if (result == 0) {
