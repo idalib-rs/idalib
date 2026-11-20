@@ -35,11 +35,14 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
+      # Visual Studio's C++ headers reject older Clang versions (MSVC 14.52
+      # requires Clang 22), and the runner image's own LLVM may lag behind.
       - name: install clang/llvm
         uses: KyleMayes/install-llvm-action@a7a1a882e2d06ebe05d5bb97c3e1f8c984ae96fc
         with:
-          version: "20"
-          directory: "${{ runner.temp }}/llvm-20"
+          version: "22.1.8"
+          force-url: "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.8/LLVM-22.1.8-win64.exe"
+          directory: "${{ runner.temp }}/llvm-22"
       - name: configure clang/llvm environment
         run: echo "LIBCLANG_PATH=$((gcm clang).source -replace "clang.exe")" >> $env:GITHUB_ENV
       - name: checkout
